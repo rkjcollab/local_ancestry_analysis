@@ -52,8 +52,12 @@ cut -f2-3 -d' ' ${rfmix_input_dir}/rfmix_input/genetic_map_tgp/chr${chr}.txt | u
 join -1 1 -2 1 tmp_chr${chr}_final_pos.txt tmp_chr${chr}_pos_cm.txt | cut -f2 -d' ' > chr${chr}_snp_locations.txt
 
 #Save the SNP details
-#Output file: chr${chr}_snps.txt
-cp tmp_chr${chr}_snps_keep.txt chr${chr}_snps.txt
+#Output file: chr${chr}_local_ancestry_snps.txt
+cp tmp_chr${chr}_snps_keep.txt chr${chr}_local_ancestry_snps.txt
+
+#Save the sample information
+#Output file: chr${chr}_local_ancestry_samples.txt
+cat $shapeit_samples_file | sed -e '1,2d' | cut -f1,2 -d' ' > chr${chr}_local_ancestry_samples.txt
 
 #Run RFMix
 RFMix_PopPhased -a chr${chr}_alleles.txt \
