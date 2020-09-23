@@ -13,6 +13,13 @@ RUN wget https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r90
     rm shapeit.v2.r904.glibcv2.12.linux.tar.gz  && \
     rm -r shapeit.v2.904.2.6.32-696.18.7.el6.x86_64
 
+# Genetic map required by shapeit
+COPY shapeit_input.tar.gz .
+RUN gzip -d shapeit_input.tar.gz && \
+    tar -xvf shapeit_input.tar && \
+    mv shapeit_input /home/ && \
+    rm -r shapeit_input.tar
+
 # RFMix
 RUN wget https://www.dropbox.com/s/cmq4saduh9gozi9/RFMix_v1.5.4.zip  && \
     unzip RFMix_v1.5.4.zip  && \

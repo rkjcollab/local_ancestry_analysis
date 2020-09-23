@@ -1,8 +1,8 @@
 #!/bin/bash
 
 bed_fn=$1
-genetic_map_input_dir=$2
-nr_threads=$3
+nr_threads=$2
+genetic_map_input_dir=/home/shapeit_input/genetic_map_hapmap
 
 #Set bim and fam file name
 bim_fn=`echo $bed_fn | sed 's/.bed/.bim/'`
