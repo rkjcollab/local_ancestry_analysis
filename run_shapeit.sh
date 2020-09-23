@@ -10,7 +10,7 @@ fam_fn=`echo $bed_fn | sed 's/.bed/.fam/'`
 
 #Set chr variable 
 #use the first column of the first line of the bim file to get this
-head -1 $bim_fn | awk '{print $1}' | sed 's/chr//'
+chr=`head -1 $bim_fn | awk '{print $1}' | sed 's/chr//'`
 
 #Run shapeit
 shapeit --input-bed $bed_fn $bim_fn $fam_fn \
