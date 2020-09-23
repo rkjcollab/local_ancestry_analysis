@@ -1,9 +1,9 @@
-FROM ubuntu:16.04
+FROM python:3.8-slim-buster
 
 RUN apt-get update -y && apt-get install -y \
     wget \
     unzip \
-    python3 \
+    r-base \
     g++
     
 # shapeit
@@ -30,9 +30,15 @@ RUN wget https://www.dropbox.com/s/cmq4saduh9gozi9/RFMix_v1.5.4.zip  && \
     rm RFMix_v1.5.4.zip  && \
     rm -r RFMix_v1.5.4 
 
+# CrossMap
+RUN pip3 install CrossMap
+
 # Install scripts
 COPY run_shapeit.sh /usr/local/bin
 COPY run_rfmix.sh /usr/local/bin
+COPY run_imputation_conversion.sh /usr/local/bin
 RUN mkdir /home/rfmix_file_creation_scripts
-COPY *.py /home/rfmix_file_creation_scripts/
+COPY ./rfmix_file_creation_scripts/* /home/rfmix_file_creation_scripts/
+RUN mkdir /home/shapeit_formatting_scripts
+COPY ./shapeit_formatting_scripts/* /home/shapeit_formatting_scripts/
 
