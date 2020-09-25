@@ -33,10 +33,22 @@ RUN wget https://www.dropbox.com/s/cmq4saduh9gozi9/RFMix_v1.5.4.zip  && \
 # CrossMap
 RUN pip3 install CrossMap
 
+# admixture
+RUN wget http://dalexander.github.io/admixture/binaries/admixture_linux-1.3.0.tar.gz  && \
+    tar -zxvf admixture_linux-1.3.0.tar.gz  && \
+    mv ./dist/admixture_linux-1.3.0/admixture /usr/local/bin  && \
+    rm admixture_linux-1.3.0.tar.gz  && \
+    rm -r ./dist
+
+# plink
+RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20200616.zip  && \
+    unzip plink_linux_x86_64_20200616.zip -d plink_linux_x86_64_20200616/  && \
+    mv plink_linux_x86_64_20200616/plink /usr/local/bin  && \
+    rm plink_linux_x86_64_20200616.zip  && \
+    rm -r plink_linux_x86_64_20200616
+
 # Install scripts
-COPY run_shapeit.sh /usr/local/bin
-COPY run_rfmix.sh /usr/local/bin
-COPY run_imputation_conversion.sh /usr/local/bin
+COPY run_*.sh /usr/local/bin/
 RUN mkdir /home/rfmix_file_creation_scripts
 COPY ./rfmix_file_creation_scripts/* /home/rfmix_file_creation_scripts/
 RUN mkdir /home/shapeit_formatting_scripts
