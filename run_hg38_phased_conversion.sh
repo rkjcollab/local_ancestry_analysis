@@ -92,25 +92,26 @@ hg19_sorted_vcf_file=tmp_${file_id}_hg19_sorted.vcf
 cat $hg19_filtered_vcf_file | vcf-sort > $hg19_sorted_vcf_file
 
 #Convert the hg19 VCF to a shapeit format haps file chr${chr}.haps
-grep ^# -v $hg19_sorted_vcf_file > tmp_${hg19_sorted_vcf_file}.genos
-cut -f1 tmp_${hg19_sorted_vcf_file}.genos > tmp_${hg19_sorted_vcf_file}.haps.c1 #chr
-cut -f3 tmp_${hg19_sorted_vcf_file}.genos > tmp_${hg19_sorted_vcf_file}.haps.c2 #snp_id
-cut -f2 tmp_${hg19_sorted_vcf_file}.genos > tmp_${hg19_sorted_vcf_file}.haps.c3 #pos
-cut -f4 tmp_${hg19_sorted_vcf_file}.genos > tmp_${hg19_sorted_vcf_file}.haps.c4 #ref
-cut -f5 tmp_${hg19_sorted_vcf_file}.genos > tmp_${hg19_sorted_vcf_file}.haps.c5 #alt
+grep ^# -v $hg19_sorted_vcf_file > ${hg19_sorted_vcf_file}.genos
+cut -f1 ${hg19_sorted_vcf_file}.genos > ${hg19_sorted_vcf_file}.haps.c1 #chr
+cut -f3 ${hg19_sorted_vcf_file}.genos > ${hg19_sorted_vcf_file}.haps.c2 #snp_id
+cut -f2 ${hg19_sorted_vcf_file}.genos > ${hg19_sorted_vcf_file}.haps.c3 #pos
+cut -f4 ${hg19_sorted_vcf_file}.genos > ${hg19_sorted_vcf_file}.haps.c4 #ref
+cut -f5 ${hg19_sorted_vcf_file}.genos > ${hg19_sorted_vcf_file}.haps.c5 #alt
 #Sometimes more than just GT is encoded in a VCF file so extract only the genotypes
 vcftools --vcf $hg19_sorted_vcf_file \
    --extract-FORMAT-info GT \
-   --recode --stdout | \
-   cut -f 3- | sed -e 's/|/ /g' | expand -t1 > \ #replace pipe with spaces and tabs with spaces
-   tmp_${hg19_sorted_vcf_file}.haps.c6_onwards #genotypes
-paste -d' ' tmp_${hg19_sorted_vcf_file}.haps.c1 \
-    tmp_${hg19_sorted_vcf_file}.haps.c2 \
-    tmp_${hg19_sorted_vcf_file}.haps.c3 \
-    tmp_${hg19_sorted_vcf_file}.haps.c4 \
-    tmp_${hg19_sorted_vcf_file}.haps.c5 \
-    tmp_${hg19_sorted_vcf_file}.haps.c6_onwards > chr${chr}.haps
-
+   --stdout | \
+   cut -f 3- | sed -e 's/|/ /g' | \
+   expand -t1 | \
+   sed -e '1d' > \
+   ${hg19_sorted_vcf_file}.haps.c6_onwards #genotypes
+paste -d' ' ${hg19_sorted_vcf_file}.haps.c1 \
+    ${hg19_sorted_vcf_file}.haps.c2 \
+    ${hg19_sorted_vcf_file}.haps.c3 \
+    ${hg19_sorted_vcf_file}.haps.c4 \
+    ${hg19_sorted_vcf_file}.haps.c5 \
+    ${hg19_sorted_vcf_file}.haps.c6_onwards > chr${chr}.haps
 
 #Create the samples file chr${chr}.samples
 sample_line=`grep \#CHROM $hg19_sorted_vcf_file | cut -f 10-` 
