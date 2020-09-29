@@ -4,6 +4,9 @@ RUN apt-get update -y && apt-get install -y \
     wget \
     unzip \
     r-base \
+    tabix \
+    bcftools \
+    vcftools \
     g++
     
 # shapeit
