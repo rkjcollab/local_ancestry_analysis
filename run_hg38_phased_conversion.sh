@@ -6,11 +6,16 @@ min_rsq=$3
 file_id=`basename $vcf_file | sed 's/.vcf.gz//'`
 
 #First create a potentially smaller file by applying the MAF filter
-maf_vcf_file=tmp_${file_id}_min_maf${min_maf}.vcf.gz
-vcftools --gzvcf $vcf_file \
-   --maf $min_maf --recode --recode-INFO R2 \
-   --stdout | bgzip -c > $maf_vcf_file
-tabix $maf_vcf_file
+if [ "$min_maf" == "0" ] 
+then
+   maf_vcf_file=$vcf_file
+else 
+   maf_vcf_file=tmp_${file_id}_min_maf${min_maf}.vcf.gz
+   vcftools --gzvcf $vcf_file \
+      --maf $min_maf --recode --recode-INFO R2 \
+      --stdout | bgzip -c > $maf_vcf_file
+   tabix $maf_vcf_file
+fi
 
 #Update ID field to chr:pos:ref:alt, as this field is often set to '.'
 #(at least that is the case in TOPMed files)
