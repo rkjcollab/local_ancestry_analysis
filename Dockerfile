@@ -52,6 +52,7 @@ RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20200616.zip  
 
 # Install scripts
 COPY run_*.sh /usr/local/bin/
+RUN chmod a+x /usr/local/bin/run_*.sh
 RUN mkdir /home/rfmix_file_creation_scripts
 COPY ./rfmix_file_creation_scripts/* /home/rfmix_file_creation_scripts/
 RUN mkdir /home/shapeit_formatting_scripts
