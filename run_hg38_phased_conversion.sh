@@ -34,7 +34,7 @@ if [ "$min_rsq" == "0" ]
 then
    touch tmp_${file_id}_r2_failed_variants.txt #create an empty file 
 else 
-   cat filter_rsq.R | R --vanilla --args tmp_${file_id}_r2.txt \
+   cat /home/shapeit_formatting_scripts/filter_rsq.R | R --vanilla --args tmp_${file_id}_r2.txt \
       tmp_${file_id}_r2_failed_variants.txt \
       $min_rsq
 fi
@@ -76,20 +76,34 @@ bcftools annotate \
   $rsq_vcf_file > $hg19_annot_vcf_file
 
 #Filter out variants without an hg19 annotation
-#Also update POS column with hg19 position
+vcftools --gzvcf $hg19_annot_vcf_file \
+   --get-INFO HG19 \
+   --stdout > tmp_${file_id}_hg19.txt
+grep -v "\?$" tmp_chr22_hg19.txt | \
+   cut -f1-4 | \
+   sed -e $'s/\t/:/g' | sed -e '1d' > \
+   tmp_${file_id}_hg19_variants.txt
 hg19_filtered_vcf_file=tmp_${file_id}_hg19_only.vcf
-grep ^# $hg19_annot_vcf_file > $hg19_filtered_vcf_file #Add the header lines
-grep "HG19=" $hg19_annot_vcf_file > ${hg19_filtered_vcf_file}.genos #Keep only entries with HG19 positions
-cut -f1 ${hg19_filtered_vcf_file}.genos > ${hg19_filtered_vcf_file}.c1 #chr
-cut -f8 ${hg19_filtered_vcf_file}.genos | sed 's/HG19=//' > ${hg19_filtered_vcf_file}.c2 #hg19 position
-cut -f 3- ${hg19_filtered_vcf_file}.genos >  ${hg19_filtered_vcf_file}.c3_onwards
+vcftools --gzvcf $hg19_annot_vcf_file \
+   --snps tmp_${file_id}_hg19_variants.txt \
+   --recode --recode-INFO HG19 \
+   --stdout > $hg19_filtered_vcf_file
+
+#Update POS column with hg19 position
+hg19_pos_vcf_file=tmp_${file_id}_hg19_pos.vcf
+grep "^#" $hg19_filtered_vcf_file > $hg19_pos_vcf_file
+grep -v "^#" ${hg19_filtered_vcf_file} | cut -f1 > ${hg19_filtered_vcf_file}.c1 #chr
+vcftools --vcf $hg19_filtered_vcf_file \
+   --get-INFO HG19 \
+   --stdout | cut -f5 | sed -e '1d' > ${hg19_filtered_vcf_file}.c2
+grep -v "^#" $hg19_filtered_vcf_file | cut -f 3- >  ${hg19_filtered_vcf_file}.c3_onwards
 paste ${hg19_filtered_vcf_file}.c1 \
    ${hg19_filtered_vcf_file}.c2 \
-   ${hg19_filtered_vcf_file}.c3_onwards >> $hg19_filtered_vcf_file
+   ${hg19_filtered_vcf_file}.c3_onwards >> $hg19_pos_vcf_file
 
 #Sort by position
 hg19_sorted_vcf_file=tmp_${file_id}_hg19_sorted.vcf
-cat $hg19_filtered_vcf_file | vcf-sort > $hg19_sorted_vcf_file
+cat $hg19_pos_vcf_file | vcf-sort > $hg19_sorted_vcf_file
 
 #Convert the hg19 VCF to a shapeit format haps file chr${chr}.haps
 grep ^# -v $hg19_sorted_vcf_file > ${hg19_sorted_vcf_file}.genos
@@ -115,7 +129,8 @@ paste -d' ' ${hg19_sorted_vcf_file}.haps.c1 \
 
 #Create the samples file chr${chr}.samples
 sample_line=`grep \#CHROM $hg19_sorted_vcf_file | cut -f 10-` 
-touch chr${chr}.samples
+echo "ID2" > chr${chr}.samples
+echo "0" >> chr${chr}.samples
 for value in $sample_line
 do
     echo $value >> chr${chr}.samples
