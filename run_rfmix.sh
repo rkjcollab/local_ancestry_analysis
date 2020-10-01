@@ -4,9 +4,12 @@
 shapeit_haps_file=$1
 shapeit_samples_file=$2
 rfmix_input_dir=$3
+nr_batches=$4
+n_european=99
+n_african=108
 
-#Extract chromosome number from shapeit file name
-chr=`basename $shapeit_haps_file | sed 's/chr//' | sed 's/.haps//'`
+#Extract chromosome number from shapeit haps file
+chr=`head -1 $shapeit_haps_file | awk '{print $1}' | sed 's/chr//'`
 
 #Get list of hapmap SNPs that are in genetic map and also their ref alleles
 #Output file: tmp_chr${chr}_tgp_mapped.txt
@@ -43,7 +46,7 @@ sed 's/ //g' tmp_chr${chr}_alleles.txt >  chr${chr}_alleles.txt
 #Output file: chr${chr}_classes.txt 
 nr_samples=`wc -l $shapeit_samples_file | xargs | cut -f1 -d' '`
 let "nr_samples=nr_samples-2"
-python3 /home/rfmix_file_creation_scripts/create_classes.py chr${chr}_classes.txt $nr_samples
+python3 /home/rfmix_file_creation_scripts/create_classes.py chr${chr}_classes.txt $nr_samples $n_european $n_african
 
 #Create the snp_locations.txt file
 #Output file: chr${chr}_snp_locations.txt
@@ -60,7 +63,61 @@ cp tmp_chr${chr}_snps_keep.txt chr${chr}_local_ancestry_snps.txt
 cat $shapeit_samples_file | sed -e '1,2d' | cut -f1,2 -d' ' > chr${chr}_local_ancestry_samples.txt
 
 #Run RFMix
-RFMix_PopPhased -a chr${chr}_alleles.txt \
-                -p chr${chr}_classes.txt \
-                -m chr${chr}_snp_locations.txt \
-                -co 1 -o chr${chr}_local_ancestry
+if [ $nr_batches -eq 1 ]
+then
+   RFMix_PopPhased -a chr${chr}_alleles.txt \
+                   -p chr${chr}_classes.txt \
+                   -m chr${chr}_snp_locations.txt \
+                   -o 1 -o chr${chr}_local_ancestry
+else
+   #Find the begin and end positions of the reference populations
+   let "total_nr_samples=nr_samples+n_european+n_african"
+   let "total_nr_ref_samples=n_european+n_african"
+   let "end_ref_pos=total_nr_samples*2"
+   let "begin_ref_pos=end_ref_pos-(total_nr_ref_samples*2)+1"
+
+   #Process each batch seperately
+   let "nr_samples_in_batch=nr_samples/nr_batches"
+   let "nr_haplos=nr_samples_in_batch*2"
+   for ((b=1; b<=$nr_batches; b++))
+   do
+      echo "Processing batch $b"
+
+      let "start_pos=((b-1)*nr_haplos)+1"
+      let "end_pos=start_pos+nr_haplos-1"
+      if [ $b -lt $nr_batches ]
+      then
+         cut_str="${start_pos}-${end_pos},${begin_ref_pos}-${end_ref_pos}"
+         echo $cut_str
+      else 
+         cut_str="${start_pos}-${end_ref_pos}"
+         echo $cut_str
+      fi
+      cut -f$cut_str -d' ' chr${chr}_classes.txt > chr${chr}_classes_batch${b}.txt
+      cut -c$cut_str chr${chr}_alleles.txt > chr${chr}_alleles_batch${b}.txt
+      
+      RFMix_PopPhased -a chr${chr}_alleles_batch${b}.txt \
+                      -p chr${chr}_classes_batch${b}.txt \
+                      -m chr${chr}_snp_locations.txt \
+                      -o 1 -o chr${chr}_local_ancestry_batch${b}
+
+      #Check if output has been created and fail if not
+      if [ ! -s "chr${chr}_local_ancestry_batch${b}.0.Viterbi.txt" ]
+      then 
+         echo "ERROR!! chr${chr}_local_ancestry_batch${b}.0.Viterbi.txt does not exist or is empty"
+         exit 1
+      fi
+      
+      if [ $b -eq 1 ]
+      then
+         cp chr${chr}_local_ancestry_batch${b}.0.Viterbi.txt chr${chr}.Viterbi.prev.batches.txt 
+         cp chr${chr}_local_ancestry_batch${b}.allelesRephased0.txt chr${chr}.allelesRephased.prev.batches.txt 
+      else
+         paste chr${chr}.Viterbi.prev.batches.txt chr${chr}_local_ancestry_batch${b}.0.Viterbi.txt  -d' ' | sed 's/  / /g' > chr${chr}_local_ancestry.0.Viterbi.txt 
+         cp chr${chr}_local_ancestry.0.Viterbi.txt chr${chr}.Viterbi.prev.batches.txt 
+         paste chr${chr}.allelesRephased.prev.batches.txt chr${chr}_local_ancestry_batch${b}.allelesRephased0.txt -d' ' | sed 's/ //g' > chr${chr}_local_ancestry.allelesRephased0.txt
+         cp chr${chr}_local_ancestry.allelesRephased0.txt chr${chr}.allelesRephased.prev.batches.txt
+      fi
+   done
+fi
+
