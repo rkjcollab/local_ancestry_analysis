@@ -5,6 +5,7 @@ shapeit_haps_file=$1
 shapeit_samples_file=$2
 rfmix_input_dir=$3
 nr_batches=$4
+collapse_flag=$5  #either -co to collapse or -o to not collapse the RFmix output
 n_european=99
 n_african=108
 
@@ -68,7 +69,7 @@ then
    RFMix_PopPhased -a chr${chr}_alleles.txt \
                    -p chr${chr}_classes.txt \
                    -m chr${chr}_snp_locations.txt \
-                   -o 1 -o chr${chr}_local_ancestry
+                   $collapse_flag 1 -o chr${chr}_local_ancestry
 else
    #Find the begin and end positions of the reference populations
    let "total_nr_samples=nr_samples+n_european+n_african"
@@ -99,7 +100,7 @@ else
       RFMix_PopPhased -a chr${chr}_alleles_batch${b}.txt \
                       -p chr${chr}_classes_batch${b}.txt \
                       -m chr${chr}_snp_locations.txt \
-                      -o 1 -o chr${chr}_local_ancestry_batch${b}
+                      $collapse_flag 1 -o chr${chr}_local_ancestry_batch${b}
 
       #Check if output has been created and fail if not
       if [ ! -s "chr${chr}_local_ancestry_batch${b}.0.Viterbi.txt" ]
