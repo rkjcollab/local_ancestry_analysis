@@ -52,7 +52,7 @@ fi
 zcat $rsq_vcf_file | grep -v ^# | cut -f1 > tmp_${file_id}_chr_col.txt
 zcat $rsq_vcf_file | grep -v ^# | cut -f2 > tmp_${file_id}_pos_col.txt
 zcat $rsq_vcf_file | grep -v ^# | cut -f3 > tmp_${file_id}_snp_col.txt
-chr=`head -1 tmp_chr22_chr_col.txt | sed 's/chr//'`
+chr=`head -1 tmp_${file_id}_chr_col.txt | sed 's/chr//'`
 paste tmp_${file_id}_chr_col.txt \
    tmp_${file_id}_pos_col.txt tmp_${file_id}_pos_col.txt \
    tmp_${file_id}_snp_col.txt > tmp_chr${chr}_in.bed 
