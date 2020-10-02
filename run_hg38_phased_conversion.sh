@@ -79,7 +79,7 @@ bcftools annotate \
 vcftools --gzvcf $hg19_annot_vcf_file \
    --get-INFO HG19 \
    --stdout > tmp_${file_id}_hg19.txt
-grep -v "\?$" tmp_chr22_hg19.txt | \
+grep -v "\?$" tmp_${file_id}_hg19.txt | \
    cut -f1-4 | \
    sed -e $'s/\t/:/g' | sed -e '1d' > \
    tmp_${file_id}_hg19_variants.txt
