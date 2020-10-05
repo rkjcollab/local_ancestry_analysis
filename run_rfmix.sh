@@ -51,9 +51,10 @@ python3 /home/rfmix_file_creation_scripts/create_classes.py chr${chr}_classes.tx
 
 #Create the snp_locations.txt file
 #Output file: chr${chr}_snp_locations.txt
-cut -f1 -d' ' tmp_chr${chr}_snps_keep.txt > tmp_chr${chr}_final_pos.txt
-cut -f2-3 -d' ' ${rfmix_input_dir}/genetic_map_tgp/chr${chr}.txt | uniq > tmp_chr${chr}_pos_cm.txt
-join -1 1 -2 1 tmp_chr${chr}_final_pos.txt tmp_chr${chr}_pos_cm.txt | cut -f2 -d' ' > chr${chr}_snp_locations.txt
+cut -f1 -d' ' tmp_chr${chr}_snps_keep.txt | sort > tmp_chr${chr}_final_pos.txt
+cut -f2-3 -d' ' ${rfmix_input_dir}/genetic_map_tgp/chr${chr}.txt | sort | uniq > tmp_chr${chr}_pos_cm.txt
+join -1 1 -2 1 tmp_chr${chr}_final_pos.txt tmp_chr${chr}_pos_cm.txt > tmp_chr${chr}_snp_locations.txt
+cat tmp_chr${chr}_snp_locations.txt | sort -n | cut -f2 -d' ' > chr${chr}_snp_locations.txt
 
 #Save the SNP details
 #Output file: chr${chr}_local_ancestry_snps.txt
