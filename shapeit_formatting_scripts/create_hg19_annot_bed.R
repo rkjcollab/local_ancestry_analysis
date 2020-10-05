@@ -20,5 +20,8 @@ out.bed <- data.frame(
   HG19=bed$V2
 )
 out.bed <- out.bed[order(out.bed$FROM),]
+#convert to character to ensure that this is not convered to scientific notation
+out.bed$FROM <- as.character(out.bed$FROM) 
+out.bed$TO <- as.character(out.bed$TO)
 
 write.table(out.bed, out.bed.name,  sep="\t", quote=F, row.names=F, col.names=F)
