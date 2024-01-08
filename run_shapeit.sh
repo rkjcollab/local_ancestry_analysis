@@ -2,7 +2,8 @@
 
 bed_fn=$1
 nr_threads=$2
-genetic_map_input_dir=/home/shapeit_input/genetic_map_hapmap
+genetic_map_input_dir=$3
+out_dir=$4
 
 #Set bim and fam file name
 bim_fn=`echo $bed_fn | sed 's/.bed/.bim/'`
@@ -16,4 +17,4 @@ chr=`head -1 $bim_fn | awk '{print $1}' | sed 's/chr//'`
 shapeit --input-bed $bed_fn $bim_fn $fam_fn \
         --input-map ${genetic_map_input_dir}/chr${chr}.txt \
         --thread $nr_threads \
-        --output-max chr${chr}.haps chr${chr}.samples
+        --output-max ${out_dir}/chr${chr}.haps ${out_dir}/chr${chr}.samples
