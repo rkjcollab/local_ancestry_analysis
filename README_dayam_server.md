@@ -24,6 +24,8 @@ https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html#gmap .
 
 The hapmap genetic map file was downloaded from: http://www.shapeit.fr/files/genetic_map_b37.tar.gz on 29 April 2016.
 
+SDS notes: this was present in GitHub repo.
+
 ### genetic_map_tgp
 
 Genetic map files that are required by RFMix. 
@@ -31,12 +33,16 @@ Genetic map files that are required by RFMix.
 The map files used were downloaded from https://github.com/joepickrell/1000-genomes-genetic-maps/tree/master/interpolated_from_hapmap (downloaded oned 29 April 2016).
 The files were renamed to chr1.txt, chr2.txt, ..., chr22.txt
 
+SDS notes: got this from archive rfmix_input.tar.gz on BioDataCatalyst.
+
 ### tgp
 
 Reference (ancestral) populations required by RFmix - 99 CEU and 108 YRI. 
 
 Downloaded the VCF files in ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ to data/raw/tgp_release_20130502. Created the following file from the first worksheet of http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx:
 <i>ceu_yri_ids.txt</i> in this same directory, containing a list of all CEU and YRI IDs. Ran the script <code>create_tgp_input_files.sh</code> in the scripts directory, to extract the already phased TGP CEU and YRI subjects into IMPUTE file format (which is easy to later on merge with the admixed ShapeIT phased files).
+
+SDS notes: got this from archive rfmix_input.tar.gz on BioDataCatalyst.
 
 ## Step 1: Setup
 
