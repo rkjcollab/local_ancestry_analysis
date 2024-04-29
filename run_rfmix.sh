@@ -6,8 +6,14 @@ shapeit_samples_file=$2
 rfmix_input_dir=$3
 nr_batches=$4
 collapse_flag=$5  #either -co to collapse or -o to not collapse the RFmix output
+code_dir=$6
+out_dir=$7
+
 n_european=99
 n_african=108
+
+# Set out_dir as working directory
+cd "$out_dir"
 
 #Extract chromosome number from shapeit haps file
 chr=`head -1 $shapeit_haps_file | awk '{print $1}' | sed 's/chr//'`
@@ -26,17 +32,17 @@ join -1 1 -2 2 tmp_chr${chr}_unique.txt tmp_chr${chr}_tgp_sorted.txt > tmp_chr${
 #-determine if ref SNP has changed
 #Output file: tmp_chr${chr}_snps_keep.txt
 cat $shapeit_haps_file | cut -f2-5 -d ' ' > tmp_chr${chr}_admixed_snps.txt
-python3 /home/rfmix_file_creation_scripts/get_admixed_snps.py tmp_chr${chr}_tgp_mapped.txt tmp_chr${chr}_admixed_snps.txt tmp_chr${chr}_snps_keep.txt
+python3 ${code_dir}/rfmix_file_creation_scripts/get_admixed_snps.py tmp_chr${chr}_tgp_mapped.txt tmp_chr${chr}_admixed_snps.txt tmp_chr${chr}_snps_keep.txt
 
 #Rewrite the reference population file in the right format and to contain only the SNPs to keep
 #Output file: tmp_chr${chr}_ref_haps.txt
 sed -e '1d'  ${rfmix_input_dir}/tgp/chr${chr}.impute.legend | cut -f2 -d' '  | sed "s/^/${chr}:/" >  tmp_chr${chr}_ref_snps.txt
 paste tmp_chr${chr}_ref_snps.txt  ${rfmix_input_dir}/tgp/chr${chr}.impute.hap > tmp_chr${chr}_ref_select.txt
-python3 /home/rfmix_file_creation_scripts/get_ref_haps.py tmp_chr${chr}_snps_keep.txt tmp_chr${chr}_ref_select.txt tmp_chr${chr}_ref_haps.txt
+python3 ${code_dir}/rfmix_file_creation_scripts/get_ref_haps.py tmp_chr${chr}_snps_keep.txt tmp_chr${chr}_ref_select.txt tmp_chr${chr}_ref_haps.txt
 
 #Rewrite the admixed file in the right format and to contain only the SNPs to keep, and change 0/1 codings where necessary for different ref/alt alleles
 #Output file: tmp_chr${chr}_admixed_haps.txt 
-python3 /home/rfmix_file_creation_scripts/get_admixed_haps.py tmp_chr${chr}_snps_keep.txt $shapeit_haps_file tmp_chr${chr}_admixed_haps.txt 
+python3 ${code_dir}/rfmix_file_creation_scripts/get_admixed_haps.py tmp_chr${chr}_snps_keep.txt $shapeit_haps_file tmp_chr${chr}_admixed_haps.txt 
 
 #Create the alleles.txt file
 #Output file:  chr${chr}_alleles.txt 
@@ -47,7 +53,7 @@ sed 's/ //g' tmp_chr${chr}_alleles.txt >  chr${chr}_alleles.txt
 #Output file: chr${chr}_classes.txt 
 nr_samples=`wc -l $shapeit_samples_file | xargs | cut -f1 -d' '`
 let "nr_samples=nr_samples-2"
-python3 /home/rfmix_file_creation_scripts/create_classes.py chr${chr}_classes.txt $nr_samples $n_european $n_african
+python3 ${code_dir}/rfmix_file_creation_scripts/create_classes.py chr${chr}_classes.txt $nr_samples $n_european $n_african
 
 #Create the snp_locations.txt file
 #Output file: chr${chr}_snp_locations.txt
