@@ -129,3 +129,5 @@ else
    done
 fi
 
+# Cleanup
+rm ${out_dir}/tmp_*
