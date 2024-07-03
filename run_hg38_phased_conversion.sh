@@ -14,6 +14,7 @@
 vcf_file=$1
 out_dir=$2
 n_cpus=$3
+code_dir=$4
 
 file_id=`basename $vcf_file | sed 's/.vcf.gz//'`
 
@@ -34,12 +35,12 @@ paste "${out_dir}/tmp_${file_id}_chr_col.txt" \
 # TODO: alt option if the above is slow
 # bcftools query -f'%CHROM\t%POS0\t%END\t%ID\n' file.bcf
 
-CrossMap.py bed shapeit_formatting_scripts/hg38ToHg19.over.chain/hg38ToHg19.over.chain \
+CrossMap.py bed "${code_dir}/shapeit_formatting_scripts/hg38ToHg19.over.chain" \
             "${out_dir}/tmp_chr${chr}_in.bed"  \
             "${out_dir}/tmp_chr${chr}_out.bed"
 
 #Create bed file to annotate the hg19 position
-cat shapeit_formatting_scripts/create_hg19_annot_bed.R | R --vanilla --args $chr \
+cat "${code_dir}/shapeit_formatting_scripts/create_hg19_annot_bed.R" | R --vanilla --args $chr \
    "${out_dir}/tmp_chr${chr}_out.bed" \
    "${out_dir}/tmp_chr${chr}_hg19_annot.txt"
 bgzip "${out_dir}/tmp_chr${chr}_hg19_annot.txt"
