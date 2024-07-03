@@ -28,7 +28,7 @@ zcat $rsq_vcf_file | grep -v ^# | cut -f2 > "${out_dir}/tmp_${file_id}_pos_col.t
 zcat $rsq_vcf_file | grep -v ^# | cut -f3 > "${out_dir}/tmp_${file_id}_snp_col.txt"
 chr=`head -1 ${out_dir}/tmp_${file_id}_chr_col.txt | sed 's/chr//'`
 paste "${out_dir}/tmp_${file_id}_chr_col.txt" \
-   "${out_dir}/tmp_${file_id}_pos_col.txt tmp_${file_id}_pos_col.txt" \
+   "${out_dir}/tmp_${file_id}_pos_col.txt" "${out_dir}/tmp_${file_id}_pos_col.txt" \
    "${out_dir}/tmp_${file_id}_snp_col.txt" > "${out_dir}/tmp_chr${chr}_in.bed"
 
 # Make a BED file: chr, pos (0-based), end pos (1-based), id
