@@ -1,0 +1,43 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --partition=amilan
+#SBATCH --ntasks=64
+#SBATCH --job-name="rfmix"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_imp_co/maf0.03_rsq0.9/job_run_rfmix.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_imp_co/maf0.03_rsq0.9/job_run_rfmix.err"
+#SBATCH --account=amc-general
+#SBATCH --time=22:00:00
+
+# Script assumes prep_input.sh and run_shapeit.sh were already run to
+# prepare and phase input data.
+
+# TO NOTE: update the variables to set the code directory (code_dir),
+# the output directory (out_dir), the SHAPEIT input directory (shapeit_dir),
+# the rfmix input provided with the code (rfmix_input), the number of
+# batches for RFMix (nr_batch), whether or not to collapse output
+# (collapse_flag), and which chromosomes to run (batch).
+
+code_dir="/home/sslack@xsede.org/code/ortega/local_anc_afr_eur"
+out_dir="/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_imp_co/maf0.03_rsq0.9"
+shapeit_dir="/scratch/alpine/sslack@xsede.org/ortega/shapeit_output_imp/maf0.03_rsq0.9"
+rfmix_input="/projects/sslack@xsede.org/genetic_maps/hg19/rfmix_input"
+nr_batch=50  # 50 based on previous examples
+collapse_flag="-co"  # either -co to collapse or -o to not, use -o for LAAA input
+batch=$(seq 1 22)
+
+# mkdir "$out_dir"
+cd "$out_dir"  # so logs saved in output directory
+
+module load singularity
+sing_image="${code_dir}/local_anc_afr_eur_on_sevenbridges_latest.sif"
+export SINGULARITY_BINDPATH=/scratch/alpine/sslack@xsede.org/ortega:/scratch/alpine/sslack@xsede.org/ortega
+
+for chr in $batch; do
+        mkdir "chr${chr}"
+        shapeit_haps="${shapeit_dir}/chr${chr}.haps"
+        shapeit_samples="${shapeit_dir}/chr${chr}.samples"
+        singularity exec $sing_image bash /home/sslack@xsede.org/code/ortega/local_anc_afr_eur/run_rfmix.sh \
+                "$shapeit_haps" "$shapeit_samples" "$rfmix_input" "$nr_batch" "$collapse_flag" \
+                "$code_dir" "${out_dir}/chr${chr}"
+done

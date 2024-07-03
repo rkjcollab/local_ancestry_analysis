@@ -1,0 +1,50 @@
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --partition=amilan
+#SBATCH --ntasks=32
+#SBATCH --job-name="prep"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/shapeit_input_imp/maf0.03_rsq0.9/job_prep_input.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/shapeit_input_imp/maf0.03_rsq0.9/job_prep_input.err"
+#SBATCH --account=amc-general
+
+cd /scratch/alpine/sslack@xsede.org/ortega
+
+# Script requires PLINK1.9 format input split by chromosome, can be either
+# build hg19 or hg38, but build must be specified. If build is hg19, the
+# liftover step included in prep_input.sh will be skipped (but SNPs with
+# duplicate positions are still removed).
+
+# TO NOTE: update the variables to set the PLINK input dir (plink_input_dir),
+# the code directory (code_dir), and the output directory (out_dir).
+# Also need to change the PLINK file name structure in the loop below if
+# different from chr#_clean. If only doing one chromosome, can comment out
+# loop and instead set optional chr value.
+
+plink_input_dir="/scratch/alpine/sslack@xsede.org/ortega/imputed_clean/maf0.03_rsq0.9"
+code_dir="/home/sslack@xsede.org/code/ortega/local_anc_afr_eur"
+out_dir="/scratch/alpine/sslack@xsede.org/ortega/shapeit_input_imp/maf0.03_rsq0.9"
+build="hg38"  # either "hg19" or "hg38"
+
+# If need to convert from a single file to by-chromosome PLINK files, can
+# use something like the following code:
+for chr in {1..22}; do
+ 	plink2 \
+		--bfile "${plink_input_dir}/imputed_clean_concat_chrpos" \
+		--make-bed  --keep-allele-order \
+ 		--set-all-var-ids @:#:\$r:\$a --chr ${chr} \
+		--new-id-max-allele-len 100 \
+		--out "${plink_input_dir}/chr${chr}_clean"
+done
+
+module load singularity
+sing_image="${code_dir}/local_anc_afr_eur_on_sevenbridges_latest.sif"
+export SINGULARITY_BINDPATH=/scratch/alpine/sslack@xsede.org/ortega:/scratch/alpine/sslack@xsede.org/ortega
+
+for chr in {1..22}; do
+	echo "Preparing chr${chr} input."
+	singularity exec $sing_image bash /home/sslack@xsede.org/code/ortega/local_anc_afr_eur/prep_input.sh \
+		"${plink_input_dir}/chr${chr}_clean" \
+		"$out_dir" \
+		"$code_dir" \
+		"$build"
+done
