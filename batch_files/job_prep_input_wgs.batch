@@ -1,0 +1,27 @@
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --partition=amilan
+#SBATCH --ntasks=30
+#SBATCH --job-name="prep_wgs"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input_2/job_prep_input_wgs.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input_2/job_prep_input_wgs.err"
+#SBATCH --account=amc-general
+#SBATCH --time=06:00:00
+
+out_dir="/scratch/alpine/sslack@xsede.org/ortega/input_2"
+code_dir="/home/sslack@xsede.org/repos/pgx_laba/local_anc_afr_eur"
+min_maf=0.03
+nr_threads="$SLURM_NTASKS"
+
+cd "$out_dir"  # so logs saved in output directory
+
+module load anaconda
+conda activate bcftools
+
+# TODO: revisit and define VCF above, with substitution delayed until loop
+for chr in 8 10 17; do
+    input_vcf="/scratch/alpine/sslack@xsede.org/ortega/input_2/chr${chr}.vcf.gz"
+
+    bash ${code_dir}/prep_input_wgs.sh \
+        $chr "$input_vcf" $out_dir $min_maf $nr_threads
+done
