@@ -5,11 +5,11 @@
 # hg38.
 
 # Get args
-chr=17
-vcf_file="background/from_dayam_server/topmed_freeze8_phased_sarp/chr${chr}.vcf.gz"
-out_dir="data/rfmix_wgs/input"
-min_maf=0.03
-n_cpus=10
+chr=$1
+vcf_file=$2
+out_dir=$3
+min_maf=$4
+nr_threads=$5
 
 # Remove ID, INFO, FORMAT fields from VCF file
 bcftools  annotate -x ID,INFO,FORMAT \
