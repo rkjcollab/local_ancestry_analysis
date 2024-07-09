@@ -1,0 +1,27 @@
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --partition=amilan
+#SBATCH --ntasks=30
+#SBATCH --job-name="ph_conv"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/shapeit_format/job_run_hg38_phased_conversion.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/shapeit_format/job_run_hg38_phased_conversion.err"
+#SBATCH --account=amc-general
+#SBATCH --time=03:00:00
+
+cd "/scratch/alpine/sslack@xsede.org/ortega"
+
+nr_threads="$SLURM_NTASKS"
+out_dir="shapeit_format"
+code_dir="/home/sslack@xsede.org/repos/pgx_laba/local_anc_afr_eur"
+
+module load R/4.4.0
+module load anaconda
+conda activate bcftools
+# To note: CrossMap v7 installed on main python installation
+
+for chr in 8 10 17; do
+	vcf_file="input/chr${chr}_noinfo_maf0.03_snp_id.vcf.gz"
+
+	bash ${code_dir}/run_hg38_phased_conversion.sh \
+		"$vcf_file" "$out_dir" "$nr_threads" "$code_dir"
+done
