@@ -10,24 +10,32 @@ vcf_file=$2
 out_dir=$3
 min_maf=$4
 nr_threads=$5
+samp_ids=$6
 
 # Remove ID, INFO, FORMAT fields from VCF file
 bcftools  annotate -x ID,INFO,FORMAT \
-    "$vcf_file" -Oz -o "${out_dir}/tmp_chr${chr}_noinfo.vcf.gz" \
-    --threads $nr_threads
+     "$vcf_file" -Oz -o "${out_dir}/tmp_chr${chr}_noinfo.vcf.gz" \
+     --threads $nr_threads
 
 # Filter by MAF
 bcftools view -i "MAF>0.03" \
-    "${out_dir}/chr${chr}_noinfo.vcf.gz" \
-    -Oz -o  "${out_dir}/chr${chr}_noinfo_maf${min_maf}.vcf.gz" \
-    --threads $nr_threads
+     "${out_dir}/tmp_chr${chr}_noinfo.vcf.gz" \
+     -Oz -o  "${out_dir}/tmp_chr${chr}_noinfo_maf${min_maf}.vcf.gz" \
+     --threads $nr_threads
 
 # Update variant IDs
 snp_id_vcf_file="${out_dir}/chr${chr}_noinfo_maf${min_maf}_snp_id.vcf.gz"
 bcftools annotate --set-id '%CHROM:%POS:%REF:%FIRST_ALT' \
-    "${out_dir}/chr${chr}_noinfo_maf${min_maf}.vcf.gz" | \
-    bgzip -c > $snp_id_vcf_file
+     "${out_dir}/tmp_chr${chr}_noinfo_maf${min_maf}.vcf.gz" | \
+     bgzip -c > $snp_id_vcf_file
 tabix $snp_id_vcf_file
+
+# Filter to just samples of interest
+snp_id_vcf_file_filt="${out_dir}/chr${chr}_noinfo_maf${min_maf}_snp_id_filt.vcf.gz"
+bcftools view -S "$samp_ids" \
+    $snp_id_vcf_file \
+    -Oz -o $snp_id_vcf_file_filt
+tabix $snp_id_vcf_file_filt
 
 # Clean up
 rm ${out_dir}/tmp_*

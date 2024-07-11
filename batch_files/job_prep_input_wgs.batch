@@ -1,17 +1,18 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --partition=amilan
-#SBATCH --ntasks=30
+#SBATCH --ntasks=40
 #SBATCH --job-name="prep_wgs"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input_2/job_prep_input_wgs.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input_2/job_prep_input_wgs.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs_2.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs_2.err"
 #SBATCH --account=amc-general
-#SBATCH --time=06:00:00
+#SBATCH --time=01:00:00
 
-out_dir="/scratch/alpine/sslack@xsede.org/ortega/input_2"
+out_dir="/scratch/alpine/sslack@xsede.org/ortega/input"
 code_dir="/home/sslack@xsede.org/repos/pgx_laba/local_anc_afr_eur"
 min_maf=0.03
 nr_threads="$SLURM_NTASKS"
+samp_ids="/scratch/alpine/sslack@xsede.org/ortega/ids/sample_ids.txt"
 
 cd "$out_dir"  # so logs saved in output directory
 
@@ -20,8 +21,8 @@ conda activate bcftools
 
 # TODO: revisit and define VCF above, with substitution delayed until loop
 for chr in 8 10 17; do
-    input_vcf="/scratch/alpine/sslack@xsede.org/ortega/input_2/chr${chr}.vcf.gz"
+    input_vcf="/scratch/alpine/sslack@xsede.org/ortega/input/chr${chr}.vcf.gz"
 
     bash ${code_dir}/prep_input_wgs.sh \
-        $chr "$input_vcf" $out_dir $min_maf $nr_threads
+        $chr "$input_vcf" $out_dir $min_maf $nr_threads $samp_ids
 done

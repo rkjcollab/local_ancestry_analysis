@@ -63,7 +63,7 @@ grep "^#" $hg19_filtered_vcf_file > $hg19_pos_vcf_file
 grep -v "^#" ${hg19_filtered_vcf_file} | cut -f1 > ${hg19_filtered_vcf_file}.c1 #chr
 bcftools query -f "%INFO/HG19\n" $hg19_filtered_vcf_file > \
     ${hg19_filtered_vcf_file}.c2 #pos
-    
+
 grep -v "^#" $hg19_filtered_vcf_file | cut -f 3- >  ${hg19_filtered_vcf_file}.c3_onwards
 paste ${hg19_filtered_vcf_file}.c1 \
     ${hg19_filtered_vcf_file}.c2 \
@@ -106,3 +106,5 @@ do
     echo $value >> "${out_dir}/chr${chr}.samples"
 done
 
+# Clean up
+rm ${out_dir}/tmp_*

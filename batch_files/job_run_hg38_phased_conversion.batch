@@ -20,7 +20,7 @@ conda activate bcftools
 # To note: CrossMap v7 installed on main python installation
 
 for chr in 8 10 17; do
-	vcf_file="input/chr${chr}_noinfo_maf0.03_snp_id.vcf.gz"
+	vcf_file="input/chr${chr}_noinfo_maf0.03_snp_id_filt.vcf.gz"
 
 	bash ${code_dir}/run_hg38_phased_conversion.sh \
 		"$vcf_file" "$out_dir" "$nr_threads" "$code_dir"
