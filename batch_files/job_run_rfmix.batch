@@ -4,10 +4,11 @@
 #SBATCH --partition=amilan
 #SBATCH --ntasks=64
 #SBATCH --job-name="rfmix"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_co/job_run_rfmix_chr10.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_co/job_run_rfmix_chr10.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_o/job_run_rfmix_chr8.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_o/job_run_rfmix_chr8.err"
 #SBATCH --account=amc-general
-#SBATCH --time=24:00:00
+#SBATCH --time=40:00:00
+#SBATCH --qos=long
 
 # Script assumes prep_input.sh and run_shapeit.sh were already run to
 # prepare and phase input data.
@@ -19,12 +20,12 @@
 # (collapse_flag), and which chromosomes to run (batch).
 
 code_dir="/home/sslack@xsede.org/repos/pgx_laba/local_anc_afr_eur"
-out_dir="/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_co"
+out_dir="/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_o"
 shapeit_dir="/scratch/alpine/sslack@xsede.org/ortega/shapeit_format"
 rfmix_input="/projects/sslack@xsede.org/genetic_maps/hg19/rfmix_input"
 nr_batch=50  # 50 based on previous examples
-collapse_flag="-co"  # either -co to collapse or -o to not, use -o for LAAA input
-batch=$(seq 10 10)
+collapse_flag="-o"  # either -co to collapse or -o to not, use -o for LAAA input
+batch=$(seq 8 8)
 
 # mkdir "$out_dir"
 cd "$out_dir"  # so logs saved in output directory
