@@ -3,26 +3,44 @@
 #SBATCH --partition=amilan
 #SBATCH --ntasks=40
 #SBATCH --job-name="prep_wgs"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs_2.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs_2.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs.err"
 #SBATCH --account=amc-general
 #SBATCH --time=01:00:00
 
-out_dir="/scratch/alpine/sslack@xsede.org/ortega/input"
-code_dir="/home/sslack@xsede.org/repos/pgx_laba/local_anc_afr_eur"
+# TO NOTE: depending on where running may have additional steps so apptainer
+# ready to run shell below.
+# TO NOTE: update the variables to set the data directory (data_dir), the output
+# directory (out_dir), code directory (code_dir), the minimum MAF to keep when
+# filtering (min_maf), thread number (nr_threads), list of sample IDs to include
+# (samp_ids), the list of chromosomes want to run (batch), and the VCF file name
+# structure for that batch (input_vcf).
+
+# Set inputs
+data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
+
+out_dir="${data_dir}/data/pipeline_test_data/imp_output"
+# out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
+code_dir="/Users/slacksa/repos/pgx_laba/local_anc_afr_eur"
 min_maf=0.03
-nr_threads="$SLURM_NTASKS"
-samp_ids="/scratch/alpine/sslack@xsede.org/ortega/ids/sample_ids.txt"
+nr_threads=4  # or "$SLURM_NTASKS"
+samp_ids="${data_dir}/data/pipeline_test_data/imp/sample_list.txt"
+# samp_ids="${data_dir}/data/pipeline_test_data/wgs/sample_list.txt"
 
-cd "$out_dir"  # so logs saved in output directory
+batch="22"
+batch="10"
 
-module load anaconda
-conda activate bcftools
+for chr in $batch; do
+    input_vcf="${data_dir}/data/pipeline_test_data/imp/chr${chr}_small.vcf"
+    # input_vcf="${data_dir}/data/pipeline_test_data/wgs/chr${chr}_small.vcf"
 
-# TODO: revisit and define VCF above, with substitution delayed until loop
-for chr in 8 10 17; do
-    input_vcf="/scratch/alpine/sslack@xsede.org/ortega/input/chr${chr}.vcf.gz"
-
-    bash ${code_dir}/prep_input_wgs.sh \
-        $chr "$input_vcf" $out_dir $min_maf $nr_threads $samp_ids
+    apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
+        ${code_dir}/local_ancestry_analysis.sif \
+        bash ${code_dir}/prep_input_wgs.sh \
+        "$chr" \
+        "$input_vcf" \
+        "$out_dir" \
+        "$min_maf" \
+        "$nr_threads" \
+        "$samp_ids"
 done
