@@ -8,20 +8,43 @@
 #SBATCH --account=amc-general
 #SBATCH --time=03:00:00
 
-cd "/scratch/alpine/sslack@xsede.org/ortega"
+# TO NOTE: update the variables to set the data directory (data_dir), the output
+# directory (out_dir), code directory (code_dir), the minimum imputation Rsq to
+# keep when filtering imputed data (min_rsq, set to 0 for WGS input), thread
+# number (nr_threads), the genome build of the input data (build, either hg38 or
+# hg19), the list of chromosomes want to run (batch) for the given single-
+# chromosome VCF file name structure for that batch (input_vcf).
 
-nr_threads="$SLURM_NTASKS"
-out_dir="shapeit_format"
-code_dir="/home/sslack@xsede.org/repos/pgx_laba/local_anc_afr_eur"
+data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
+nr_threads=4  # or "$SLURM_NTASKS"
+code_dir="/Users/slacksa/repos/pgx_laba/local_anc_afr_eur"
 
-module load R/4.4.0
-module load anaconda
-conda activate bcftools
-# To note: CrossMap v7 installed on main python installation
+# Test imputed data
+# out_dir="${data_dir}/data/pipeline_test_data/imp_output"
+# input_vcf='${data_dir}/data/pipeline_test_data/imp_output/chr${chr}_small.vcf_noinfo_maf0.03_snp_id_filt.vcf.gz'
+#     # single quotes are required here for substitution of $chr below
+# min_rsq=0.7  # if procesing WGS, set to 0
+# build="hg38"  # build of the input data, either hg38 or hg19
+# batch="22"
 
-for chr in 8 10 17; do
-	vcf_file="input/chr${chr}_noinfo_maf0.03_snp_id_filt.vcf.gz"
+# Test WGS data
+out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
+input_vcf='${data_dir}/data/pipeline_test_data/wgs_output/chr${chr}_small.vcf_noinfo_maf0.03_snp_id_filt.vcf.gz'
+	# single quotes are required here for substitution of $chr below
+min_rsq=0  # if procesing WGS, set to 0
+build="hg38"  # build of the input data, either hg38 or hg19
+batch="10"
 
-	bash ${code_dir}/run_hg38_phased_conversion.sh \
-		"$vcf_file" "$out_dir" "$nr_threads" "$code_dir"
+for chr in $batch; do
+	input_vcf_chr=$(eval "echo $input_vcf")
+
+	apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
+    	${code_dir}/local_ancestry_analysis.sif \
+		bash ${code_dir}/run_hg38_phased_conversion.sh \
+		"$input_vcf_chr" \
+		"$out_dir" \
+		"$nr_threads" \
+		"$code_dir" \
+		"$min_rsq" \
+		"$build"
 done
