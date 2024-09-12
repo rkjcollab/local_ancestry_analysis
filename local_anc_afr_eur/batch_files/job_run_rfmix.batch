@@ -2,13 +2,12 @@
 
 #SBATCH --nodes=1
 #SBATCH --partition=amilan
-#SBATCH --ntasks=64
+#SBATCH --ntasks=20
 #SBATCH --job-name="rfmix"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output/job_run_rfmix.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output/job_run_rfmix.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/job_run_rfmix_wgs.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/job_run_rfmix_wgs.err"
 #SBATCH --account=amc-general
-#SBATCH --time=40:00:00
-#SBATCH --qos=long
+#SBATCH --mem=200G
 
 # TO NOTE: update the variables to set the data directory (data_dir), code
 # directory (code_dir), the output directory (out_dir), the SHAPEIT input
@@ -16,16 +15,28 @@
 # of batches for RFMix (nr_batch), whether or not to collapse output
 # (collapse_flag), and which chromosomes to run (batch).
 
-data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
-code_dir="/Users/slacksa/repos/pgx_laba/local_anc_afr_eur"
+data_dir="/scratch/alpine/sslack@xsede.org/ortega"
+code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
 nr_batch=50  # 50 based on previous examples
 collapse_flag="-o"  # either -co to collapse or -o to not
 
 # Test chip
-out_dir="${data_dir}/data/pipeline_test_data/chip_output"
-shapeit_dir="${data_dir}/data/pipeline_test_data/chip_output"
+# out_dir="${data_dir}/pipeline_test_data/chip_output"
+# shapeit_dir="${data_dir}/pipeline_test_data/chip_output"
+# rfmix_input="${code_dir}/rfmix_input"
+# batch="22"
+
+# Test WGS
+out_dir="${data_dir}/pipeline_test_data/wgs_output"
+shapeit_dir="${data_dir}/pipeline_test_data/wgs_output"
 rfmix_input="${code_dir}/rfmix_input"
-batch="22"
+batch="10"
+
+# Test imputed
+# out_dir="${data_dir}/pipeline_test_data/imp_output"
+# shapeit_dir="${data_dir}/pipeline_test_data/imp_output"
+# rfmix_input="${code_dir}/rfmix_input"
+# batch="22"
 
 cd "$out_dir"  # so logs saved in output directory
 
@@ -34,8 +45,10 @@ for chr in $batch; do
         shapeit_haps="${shapeit_dir}/chr${chr}.haps"
         shapeit_samples="${shapeit_dir}/chr${chr}.samples"
 
+        cont_dir=$(dirname "${code_dir}")
+
         apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
-		${code_dir}/local_ancestry_analysis.sif \
+		        ${cont_dir}/local_ancestry_analysis.sif \
                 bash "${code_dir}/run_rfmix.sh" \
                 "$shapeit_haps" \
                 "$shapeit_samples" \
