@@ -10,5 +10,3 @@ failed.snps <- paste(failed.r2.frame$CHROM,
                      failed.r2.frame$REF,
                      failed.r2.frame$ALT, sep=":")
 write.table(failed.snps, out.file,  sep="\t", quote=F, row.names=F, col.names=F)
-
-
