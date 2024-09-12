@@ -18,27 +18,32 @@
 
 # Set inputs
 data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
-
-out_dir="${data_dir}/data/pipeline_test_data/imp_output"
-# out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
 code_dir="/Users/slacksa/repos/pgx_laba/local_anc_afr_eur"
 min_maf=0.03
 nr_threads=4  # or "$SLURM_NTASKS"
-samp_ids="${data_dir}/data/pipeline_test_data/imp/sample_list.txt"
-# samp_ids="${data_dir}/data/pipeline_test_data/wgs/sample_list.txt"
 
+# Test imputed data
+out_dir="${data_dir}/data/pipeline_test_data/imp_output"
+samp_ids="${data_dir}/data/pipeline_test_data/imp/sample_list.txt"
+input_vcf='${data_dir}/data/pipeline_test_data/imp/chr${chr}_small.vcf'
+    # single quotes are required here for substitution of $chr below
 batch="22"
-batch="10"
+
+# Test WGS data
+# out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
+# samp_ids="${data_dir}/data/pipeline_test_data/wgs/sample_list.txt"
+# input_vcf='${data_dir}/data/pipeline_test_data/wgs/chr${chr}_small.vcf'
+    # single quotes are required here for substitution of $chr below
+# batch="10"
 
 for chr in $batch; do
-    input_vcf="${data_dir}/data/pipeline_test_data/imp/chr${chr}_small.vcf"
-    # input_vcf="${data_dir}/data/pipeline_test_data/wgs/chr${chr}_small.vcf"
+    input_vcf_chr=$(eval "echo $input_vcf")
 
     apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
         ${code_dir}/local_ancestry_analysis.sif \
         bash ${code_dir}/prep_input_wgs.sh \
         "$chr" \
-        "$input_vcf" \
+        "$input_vcf_chr" \
         "$out_dir" \
         "$min_maf" \
         "$nr_threads" \
