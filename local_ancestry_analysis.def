@@ -1,0 +1,94 @@
+Bootstrap: docker
+From: python:3.8-slim-buster
+
+%labels
+    Author SDS
+
+%help
+    This container contains all software needed to run all sub-directories of the
+    "local_ancestry_analysis" repository. Updated from Michelle Daya's Dockerfile
+    at repo "mdaya/local_anc_afr_eur_on_sevenbridges". To use, first convert to .sif
+    image with "apptainer build local_ancestry_analysis.sif local_ancestry_analysis.def",
+    then run with "apptainer exec local_ancestry bash <script.sh>".
+
+%runscript
+    echo "Container was created $NOW"
+
+%files
+    # shapeit genetic map, must be in same directory as .def file
+    shapeit_input.tar.gz .
+
+%post
+    # General tools, bcftools, and R
+    apt-get update -y && apt-get install -y \
+        wget \
+        unzip \
+        r-base \
+        tabix \
+        bcftools \
+        vcftools \
+        g++
+
+    # shapeit
+    wget https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r904.glibcv2.12.linux.tar.gz  && \
+        tar -zxvf shapeit.v2.r904.glibcv2.12.linux.tar.gz  && \
+        mv shapeit.v2.904.2.6.32-696.18.7.el6.x86_64/bin/shapeit /usr/local/bin  && \
+        rm shapeit.v2.r904.glibcv2.12.linux.tar.gz  && \
+        rm -r shapeit.v2.904.2.6.32-696.18.7.el6.x86_64
+
+    # Unzip shapeit map
+    mkdir /data
+    gzip -d shapeit_input.tar.gz && \
+        tar -xvf shapeit_input.tar --no-same-owner && \
+        mv shapeit_input /data/ && \
+        rm -r shapeit_input.tar
+
+    # RFMix
+    wget https://www.dropbox.com/s/cmq4saduh9gozi9/RFMix_v1.5.4.zip  && \
+        unzip RFMix_v1.5.4.zip  && \
+        cd RFMix_v1.5.4/PopPhased/  && \
+        g++ -Wall -O3 -ftree-vectorize -fopenmp main.cpp getdata.cpp randomforest.cpp crfviterbi.cpp windowtosnp.cpp -o RFMix_PopPhased  && \
+        mv RFMix_PopPhased /usr/local/bin  && \
+        cd ../..  && \
+        rm RFMix_v1.5.4.zip  && \
+        rm -r RFMix_v1.5.4 
+
+    # CrossMap
+    pip3 install CrossMap
+
+    # admixture
+    wget http://dalexander.github.io/admixture/binaries/admixture_linux-1.3.0.tar.gz  && \
+        tar -zxvf admixture_linux-1.3.0.tar.gz  && \
+        mv ./dist/admixture_linux-1.3.0/admixture /usr/local/bin  && \
+        rm admixture_linux-1.3.0.tar.gz  && \
+        rm -r ./dist
+
+    # plink 1.9
+    wget https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20240818.zip  && \
+        unzip plink_linux_x86_64_20240818.zip -d plink_linux_x86_64_20240818/  && \
+        mv plink_linux_x86_64_20240818/plink /usr/local/bin  && \
+        rm plink_linux_x86_64_20240818.zip  && \
+        rm -r plink_linux_x86_64_20240818
+
+    # plink 2
+    wget https://s3.amazonaws.com/plink2-assets/alpha5/plink2_linux_x86_64_20240820.zip  && \
+        unzip plink2_linux_x86_64_20240820.zip -d plink2_linux_x86_64_20240820/  && \
+        mv plink2_linux_x86_64_20240820/plink2 /usr/local/bin  && \
+        rm plink2_linux_x86_64_20240820.zip  && \
+        rm -r plink2_linux_x86_64_20240820
+
+%test
+    echo "Check PLINK1.9 version:"
+    plink --version
+    echo "Check PLINK2 version:"
+    plink2 --version
+    echo "Check CrossMap version:"
+    CrossMap --version
+    echo "Check RFMix_PopPhased command available (RFMix version is 1.5.4):"
+    RFMix_PopPhased
+    echo "Check SHAPEIT version:"
+    shapeit --version
+    echo "Check ADMIXTURE version:"
+    admixture
+    echo "Check R version:"
+    R --version
