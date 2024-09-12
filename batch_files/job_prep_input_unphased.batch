@@ -26,12 +26,12 @@ batch="22"
 
 for chr in $batch; do
 	echo "Preparing chr${chr} input."
-	bed_fn_chr=$(eval "echo $bed_fn")
+	plink_input_chr=$(eval "echo $plink_input")
 
 	apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
 		${code_dir}/local_ancestry_analysis.sif \
 		bash ${code_dir}/prep_input.sh \
-		"$plink_input" \
+		"$plink_input_chr" \
 		"$out_dir" \
 		"$code_dir" \
 		"$build"

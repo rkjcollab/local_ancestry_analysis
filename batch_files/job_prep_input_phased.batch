@@ -23,18 +23,18 @@ min_maf=0.03
 nr_threads=4  # or "$SLURM_NTASKS"
 
 # Test imputed data
-out_dir="${data_dir}/data/pipeline_test_data/imp_output"
-samp_ids="${data_dir}/data/pipeline_test_data/imp/sample_list.txt"
-input_vcf='${data_dir}/data/pipeline_test_data/imp/chr${chr}_small.vcf'
-    # single quotes are required here for substitution of $chr below
-batch="22"
+# out_dir="${data_dir}/data/pipeline_test_data/imp_output"
+# samp_ids="${data_dir}/data/pipeline_test_data/imp/sample_list.txt"
+# input_vcf='${data_dir}/data/pipeline_test_data/imp/chr${chr}_small.vcf'
+#     # single quotes are required here for substitution of $chr below
+# batch="22"
 
 # Test WGS data
-# out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
-# samp_ids="${data_dir}/data/pipeline_test_data/wgs/sample_list.txt"
-# input_vcf='${data_dir}/data/pipeline_test_data/wgs/chr${chr}_small.vcf'
-    # single quotes are required here for substitution of $chr below
-# batch="10"
+out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
+samp_ids="${data_dir}/data/pipeline_test_data/wgs/sample_list.txt"
+input_vcf='${data_dir}/data/pipeline_test_data/wgs/chr${chr}_small.vcf'
+    single quotes are required here for substitution of $chr below
+batch="10"
 
 for chr in $batch; do
     input_vcf_chr=$(eval "echo $input_vcf")
