@@ -13,8 +13,8 @@
 # TO NOTE: update the variables to set the data directory (data_dir), the output
 # directory (out_dir), code directory (code_dir), the minimum MAF to keep when
 # filtering (min_maf), thread number (nr_threads), list of sample IDs to include
-# (samp_ids), the list of chromosomes want to run (batch), and the VCF file name
-# structure for that batch (input_vcf).
+# (samp_ids), the list of chromosomes want to run (batch), and the single-
+# chromosome VCF file name structure for that batch (input_vcf).
 
 # Set inputs
 data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
