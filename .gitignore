@@ -57,6 +57,7 @@ rsconnect/
 *.rds
 *.xls*
 *.tsv
+rfmix_input/
 
 # Images
 *.png
