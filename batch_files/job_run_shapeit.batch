@@ -3,42 +3,42 @@
 #SBATCH --partition=amilan
 #SBATCH --ntasks=64
 #SBATCH --job-name="shapeit"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/shapeit_output_imp/maf0.03_rsq0.9/job_run_shapeit_chr16-22.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/shapeit_output_imp/maf0.03_rsq0.9/job_run_shapeit_chr16-22.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/shapeit_output/job_run_shapeit.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/shapeit_output/job_run_shapeit.err"
 #SBATCH --account=amc-general
 #SBATCH --time=22:00:00
 
-# Before this script is run, prep_input.sh should be run to create to
-# create input PLINK files, with deduplicated positions and in hg19.
+# TO NOTE: update the variables to set the data directory (data_dir), code
+# directory (code_dir), the PLINK bed file name (bed_fn, note that chromosome
+# number in the file name will be filled in by the loop), thread number
+# (nr_threads), the list of chromosomes want to run (batch) with the given PLINK
+# input file name structure, and the output directory (out_dir).
 
-# TO NOTE: update the variables to set the code directory (code_dir),
-# the PLINK bed file name (bed_fn, note that chromosome number in the
-# file name will be filled in by the loop), thread number (nr_threads),
-# genetic map input directory (genetic_map_input_dir), and the output
-# directory (out_dir). Can also change batching.
-
-code_dir="/home/sslack@xsede.org/code/ortega/local_anc_afr_eur"
-bed_fn='/scratch/alpine/sslack@xsede.org/ortega/shapeit_input_imp/maf0.03_rsq0.9/chr${chr}_clean_dedup_hg19.bed'
-	# single quotes are required here for variable substitution below
-nr_threads="$SLURM_NTASKS"
-genetic_map_input_dir="/projects/sslack@xsede.org/genetic_maps/hg19/shapeit_input/genetic_map_hapmap"
-out_dir="/scratch/alpine/sslack@xsede.org/ortega/shapeit_output_imp/maf0.03_rsq0.9"
+data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
+code_dir="/Users/slacksa/repos/pgx_laba/local_anc_afr_eur"
+bed_fn='${data_dir}/data/pipeline_test_data/chip_output/chr${chr}_small_dedup_hg19.bed'
+	# single quotes are required here for substitution of $chr below
+nr_threads=4
+out_dir="${data_dir}/data/pipeline_test_data/chip_output"
 
 # batch=$(seq 1 4)  # running in 4+ batches
 # batch=$(seq 5 8)
 # batch=$(seq 9 15)
-batch=$(seq 16 22)
+# batch=$(seq 16 22)
+batch="22"
 
 cd "$out_dir"  # so logs saved in output directory
-
-module load singularity
-sing_image="${code_dir}/local_anc_afr_eur_on_sevenbridges_latest.sif"
-export SINGULARITY_BINDPATH=/scratch/alpine/sslack@xsede.org/ortega:/scratch/alpine/sslack@xsede.org/ortega
+genetic_map_input_dir="/data/shapeit_input/genetic_map_hapmap"  # path to map in container
 
 for chr in $batch; do
 	bed_fn_chr=$(eval "echo $bed_fn")
 
- 	singularity exec $sing_image bash /home/sslack@xsede.org/code/ortega/local_anc_afr_eur/run_shapeit.sh \
- 	 	"$bed_fn_chr" "$nr_threads" "$genetic_map_input_dir" "$out_dir"
+	apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
+		${code_dir}/local_ancestry_analysis.sif \
+ 		bash ${code_dir}/run_shapeit.sh \
+ 	 	"$bed_fn_chr" \
+		"$nr_threads" \
+		"$genetic_map_input_dir" \
+		"$out_dir"
 
 done
