@@ -15,7 +15,7 @@
 # input file name structure, and the output directory (out_dir).
 
 data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
-code_dir="/Users/slacksa/repos/pgx_laba/local_anc_afr_eur"
+code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
 bed_fn='${data_dir}/data/pipeline_test_data/chip_output/chr${chr}_small_dedup_hg19.bed'
 	# single quotes are required here for substitution of $chr below
 nr_threads=4
@@ -33,8 +33,10 @@ genetic_map_input_dir="/data/shapeit_input/genetic_map_hapmap"  # path to map in
 for chr in $batch; do
 	bed_fn_chr=$(eval "echo $bed_fn")
 
+	cont_dir=$(dirname "${code_dir}")
+
 	apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
-		${code_dir}/local_ancestry_analysis.sif \
+		${cont_dir}/local_ancestry_analysis.sif \
  		bash ${code_dir}/run_shapeit.sh \
  	 	"$bed_fn_chr" \
 		"$nr_threads" \

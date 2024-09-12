@@ -48,7 +48,7 @@ for chr in $batch; do
         cont_dir=$(dirname "${code_dir}")
 
         apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
-		        ${cont_dir}/local_ancestry_analysis.sif \
+		${cont_dir}/local_ancestry_analysis.sif \
                 bash "${code_dir}/run_rfmix.sh" \
                 "$shapeit_haps" \
                 "$shapeit_samples" \
