@@ -32,7 +32,7 @@ for chr in $batch; do
 
 	apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
 		${cont_dir}/local_ancestry_analysis.sif \
-		bash ${code_dir}/prep_input.sh \
+		bash ${code_dir}/prep_input_unphased.sh \
 		"$plink_input_chr" \
 		"$out_dir" \
 		"$code_dir" \
