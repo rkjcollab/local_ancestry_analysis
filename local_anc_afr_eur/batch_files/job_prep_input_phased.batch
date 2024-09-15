@@ -18,7 +18,7 @@
 
 # Set inputs
 data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
-code_dir="/Users/slacksa/repos/pgx_laba/local_anc_afr_eur"
+code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
 min_maf=0.03
 nr_threads=4  # or "$SLURM_NTASKS"
 
@@ -39,8 +39,10 @@ batch="10"
 for chr in $batch; do
     input_vcf_chr=$(eval "echo $input_vcf")
 
+    cont_dir=$(dirname "${code_dir}")
+
     apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
-        ${code_dir}/local_ancestry_analysis.sif \
+        ${cont_dir}/local_ancestry_analysis.sif \
         bash ${code_dir}/prep_input_wgs.sh \
         "$chr" \
         "$input_vcf_chr" \
