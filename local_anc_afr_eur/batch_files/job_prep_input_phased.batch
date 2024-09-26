@@ -1,12 +1,13 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --partition=amilan
-#SBATCH --ntasks=40
+#SBATCH --ntasks=12
 #SBATCH --job-name="prep_wgs"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs_5_10.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs_5_10.err"
 #SBATCH --account=amc-general
-#SBATCH --time=01:00:00
+#SBATCH --time=08:00:00
+#SBATCH --mem=40G
 
 # TO NOTE: depending on where running may have additional steps so apptainer
 # ready to run shell below.
@@ -17,10 +18,10 @@
 # chromosome VCF file name structure for that batch (input_vcf).
 
 # Set inputs
-data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
-code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
+data_dir="/scratch/alpine/sslack@xsede.org/ortega"
+code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
 min_maf=0.03
-nr_threads=4  # or "$SLURM_NTASKS"
+nr_threads="$SLURM_NTASKS"
 
 # Test imputed data
 # out_dir="${data_dir}/data/pipeline_test_data/imp_output"
@@ -30,11 +31,16 @@ nr_threads=4  # or "$SLURM_NTASKS"
 # batch="22"
 
 # Test WGS data
-out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
-samp_ids="${data_dir}/data/pipeline_test_data/wgs/sample_list.txt"
-input_vcf='${data_dir}/data/pipeline_test_data/wgs/chr${chr}_small.vcf'
-    single quotes are required here for substitution of $chr below
-batch="10"
+# out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
+# samp_ids="${data_dir}/data/pipeline_test_data/wgs/sample_list.txt"
+# input_vcf='${data_dir}/data/pipeline_test_data/wgs/chr${chr}_small.vcf'
+# batch="10"
+
+# Re-run WGS data
+out_dir="${data_dir}/input"
+samp_ids="${data_dir}/input/sample_ids.txt"
+input_vcf='${data_dir}/input/chr${chr}.vcf.gz'
+batch="5 10"
 
 for chr in $batch; do
     input_vcf_chr=$(eval "echo $input_vcf")
@@ -43,8 +49,7 @@ for chr in $batch; do
 
     apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
         ${cont_dir}/local_ancestry_analysis.sif \
-        bash ${code_dir}/prep_input_wgs.sh \
-        "$chr" \
+        bash ${code_dir}/prep_input_phased.sh \
         "$input_vcf_chr" \
         "$out_dir" \
         "$min_maf" \
