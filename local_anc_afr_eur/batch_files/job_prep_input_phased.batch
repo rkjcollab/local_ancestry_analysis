@@ -3,8 +3,8 @@
 #SBATCH --partition=amilan
 #SBATCH --ntasks=12
 #SBATCH --job-name="prep_wgs"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs_5_10.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs_5_10.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs.err"
 #SBATCH --account=amc-general
 #SBATCH --time=08:00:00
 #SBATCH --mem=40G

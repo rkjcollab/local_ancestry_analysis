@@ -4,8 +4,8 @@
 #SBATCH --partition=amilan
 #SBATCH --ntasks=64
 #SBATCH --job-name="rfmix"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_o/job_run_rfmix_wgs_chr17.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_o/job_run_rfmix_wgs_chr17.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_o/job_run_rfmix_wgs.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_o/job_run_rfmix_wgs.err"
 #SBATCH --account=amc-general
 #SBATCH --mem=10G
 #SBATCH --time=24:00:00
