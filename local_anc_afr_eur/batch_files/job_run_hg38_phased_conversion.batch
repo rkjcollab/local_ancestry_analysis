@@ -6,7 +6,7 @@
 #SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/shapeit_format/job_run_hg38_phased_conversion.out"
 #SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/shapeit_format/job_run_hg38_phased_conversion.err"
 #SBATCH --account=amc-general
-#SBATCH --time=03:00:00
+#SBATCH --time=08:00:00
 
 # TO NOTE: update the variables to set the data directory (data_dir), the output
 # directory (out_dir), code directory (code_dir), the minimum imputation Rsq to
@@ -15,9 +15,9 @@
 # hg19), the list of chromosomes want to run (batch) for the given single-
 # chromosome VCF file name structure for that batch (input_vcf).
 
-data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega"
-nr_threads=4  # or "$SLURM_NTASKS"
-code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
+data_dir="/scratch/alpine/sslack@xsede.org/ortega"
+code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
+nr_threads="$SLURM_NTASKS"
 
 # Test imputed data
 # out_dir="${data_dir}/data/pipeline_test_data/imp_output"
@@ -28,12 +28,18 @@ code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
 # batch="22"
 
 # Test WGS data
-out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
-input_vcf='${data_dir}/data/pipeline_test_data/wgs_output/chr${chr}_small.vcf_noinfo_maf0.03_snp_id_filt.vcf.gz'
-	# single quotes are required here for substitution of $chr below
-min_rsq=0  # if procesing WGS, set to 0
-build="hg38"  # build of the input data, either hg38 or hg19
-batch="10"
+# out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
+# input_vcf='${data_dir}/data/pipeline_test_data/wgs_output/chr${chr}_small.vcf_noinfo_maf0.03_snp_id_filt.vcf.gz'
+# min_rsq=0  # if procesing WGS, set to 0
+# build="hg38"  # build of the input data, either hg38 or hg19
+# batch="10"
+
+# Re-run WGS data
+out_dir="${data_dir}/shapeit_format"
+input_vcf='${data_dir}/input/chr${chr}_noinfo_maf0.03_snp_id_filt.vcf.gz'
+min_rsq=0
+build="hg38"
+batch="5 8 10 17"
 
 for chr in $batch; do
 	input_vcf_chr=$(eval "echo $input_vcf")
