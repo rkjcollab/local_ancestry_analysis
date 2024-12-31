@@ -10,6 +10,10 @@ input.dir <- args[3]
 output.dir <- args[4]
 pheno.file <- args[5]
 pheno_id_col_name <- args[6]
+cov_list <- args[7]  # should be passed as "cov1,cov2"
+
+# Reformat covariate list
+cov_list <- unlist(strsplit(cov_list, ","))
 
 # Source lung function models
 source("run_models/models_lung_function.R")
@@ -28,7 +32,6 @@ allele.afr.frame <- read.delim(
   paste0(input.dir,  "/", pheno, "_chr_", chr, "_allele_afr_dose.txt"), stringsAsFactors = F)
 
 # Fix formatting to match pheno
-  # TODO: may need to generalize this if pipeline not consistent
 colnames(allele.frame) <- gsub("\\.", ":", gsub("^X", "", colnames(allele.frame)))
 colnames(afr.frame) <- gsub("\\.", ":", gsub("^X", "", colnames(afr.frame)))
 colnames(allele.afr.frame) <- gsub("\\.", ":", gsub("^X", "", colnames(allele.afr.frame)))

@@ -10,12 +10,15 @@
 # “ALL MaxFEV1FVC ratio”
 
 # Covariates:
-# “ALL HT”  # TODO: check in cm
+# “ALL HT”
 # “ALL AGE (csga-SARP12 default SARP3)”
 # “ALL SEX”
 # study group (SARP12+CSGA vs. SARP3)
 # BMI
 # RFMix_GW_AFR, calculated from RFMix run on unimputed data
+  # TO NOTE: Abhishek, I used the estimate from RFMix run on unimputed data since
+  # I had it available, but you will instead used the estimate from RFMix run on 
+  # the imputed data calculated in step 1.1. 
 
 # Setup ------------------------------------------------------------------------
 
