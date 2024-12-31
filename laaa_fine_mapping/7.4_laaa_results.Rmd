@@ -1,0 +1,1047 @@
+---
+title: "7.4_laaa_results"
+author: "SDS"
+date: "Last compiled on `r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: kable
+    code_folding: hide
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding,
+  output_dir = paste0(Sys.getenv("RKJCOLLAB"), "/Collabs/ortega/reports")) })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(
+  root.dir = paste0(Sys.getenv("RKJCOLLAB"), "/Collabs/ortega"))
+
+# Common packages
+library(tidyverse)
+library(knitr)
+library(biomaRt)
+library(DT)
+library(conflicted)
+
+#  For locuszoomr
+library(locuszoomr)
+library(ensembldb)
+library(AnnotationHub)
+library(GGally)
+library(RColorBrewer)
+library(ggpubr)
+library(IRanges)
+library(snpStats)
+
+# Set display options
+options(digits = 4)  # only 2 digits after decimal
+
+```
+
+# **Overview**
+
+Results of LAAA run by Sarah on local ancestry results from WGS data (RFMix
+run by Sarah) for admixture mapping peaks found on chromosomes 8, 10, and 17
+for maxFVC and maxFEV1/FVC (see report "15_summary_rerun_admix_mapping").
+
+Instead of showing results exactly as Michelle did in 
+[PMID 34762840](https://pubmed.ncbi.nlm.nih.gov/34762840/), going to evaluate
+as suggested in original LAAA paper
+[PMID 29226381](https://www.ncbi.nlm.nih.gov/pmc/articles/pmid/29226381/).
+Michelle checked for significance of p-allele < 10^-3 (0.001). The LAAA
+paper suggests first checking for overall model significance at a specific
+variant, then determining which part of the model is driving that significance
+by "selecting the effect with the largest absolute value of the test
+statistics".
+
+Interpretation of overall model significance is that when fine map, the LAAA
+model significantly explains variation in maxFVC at the a. priori selected
+threshold of model P < 10^-3.
+
+
+**LAAA model formula:**
+
+pheno ~ group + age + sex + ht + bmi + RFMIX_GW_AFR + allele_dose + afr_dose + allele_afr_dose
+
+Group is SARP12+CSGA & SARP3, and RFMIX_GW_AFR is global African ancestry
+proportion calculated from unimputed chip data (same as admixture mapping input).
+
+*Note that admixture mapping results shown in h19, but LAAA/fine mapping*
+*results shown in hg38.*
+
+For locus zoom plots, LD is calculated within our study population using
+R package snpStats.
+
+# **Load Data**
+
+```{r load_data, message = F}
+
+# LAAA results - hg38
+win_chr5 <- read_delim(
+  "data/laaa_wgs_new_2/output/region_hg38_maxFVC_chr5/maxFVC_assoc_chr5.txt")
+win_chr8 <- read_delim(
+  "data/laaa_wgs_new_2/output/region_hg38_maxFVC_chr8/maxFVC_assoc_chr8.txt")
+win_chr10 <- read_delim(
+  "data/laaa_wgs_new_2/output/region_hg38_maxFEV1_FVC_chr10/maxFEV1_FVC_assoc_chr10.txt")
+win_chr17 <- read_delim(
+  "data/laaa_wgs_new_2/output/region_hg38_maxFVC_chr17/maxFVC_assoc_chr17.txt")
+
+# Dose frames
+read_dose_frames <- function(dir_name) {
+    df_list <- list.files(dir_name, full.names = T)
+    
+    df_all <- Reduce(rbind, lapply(df_list, function(file) {
+      file_base <- basename(file)
+      df_name <- gsub(
+        ".+[[:digit:]]+_", "",
+        gsub("\\.txt", "", file_base))
+      df <- read_delim(file) %>%
+        dplyr::mutate(type = df_name) %>%
+        relocate(type)
+      return(df)
+  }))
+  return(df_all)
+}
+
+df_chr5 <-
+  read_dose_frames("data/laaa_wgs_new_2/dose_frames/region_hg38_maxFVC_chr5")
+df_chr8 <-
+  read_dose_frames("data/laaa_wgs_new_2/dose_frames/region_hg38_maxFVC_chr8")
+df_chr10 <-
+  read_dose_frames("data/laaa_wgs_new_2/dose_frames/region_hg38_maxFEV1_FVC_chr10")
+df_chr17 <-
+  read_dose_frames("data/laaa_wgs_new_2/dose_frames/region_hg38_maxFVC_chr17")
+
+# Pheno values
+pheno_mff <- read_delim(
+  "data/pheno/SARP123_CSGA_348_laaa_maxFEV1_FVC_pheno.txt")
+pheno_mfvc <- read_delim(
+  "data/pheno/SARP123_CSGA_348_laaa_maxFVC_pheno.txt")
+
+# Set main paper colors
+source("/Users/slacksa/repos/pgx_laba/set_main_paper_colors.R")
+
+```
+
+**Regions Tested:**
+
++ MaxFVC chr5:`r format(min(win_chr5$position), scientific = F)` - `r format(max(win_chr5$position), scientific = F)`
++ MaxFVC chr8:`r format(min(win_chr8$position), scientific = F)` - `r format(max(win_chr8$position), scientific = F)`
++ MaxFVC chr17:`r format(min(win_chr17$position), scientific = F)` - `r format(max(win_chr17$position), scientific = F)`
++ MaxFEV1/FVC chr10:`r format(min(win_chr10$position), scientific = F)` - `r format(max(win_chr10$position), scientific = F)`
+
+# **Functions**
+
+**For Report:**
+
+```{r}
+# Significance thresholds
+sig_thresh <- 0.001
+nom_sig_thresh <- 0.01
+
+# Colors
+# colors <- brewer.pal(3, "BuGn")  # used for publication colors made
+
+# Get significant results
+get_sig <- function(df, thresh) {
+  # Get ANOVA significant results
+  df_sig <- df %>% dplyr::filter(anova_p < thresh)
+  
+  # Write abs(max) column name in new column
+  df_sig$max_abs_beta <- apply(
+    df_sig[, c("allele_dose_beta", "afr_dose_beta", "allele_afr_dose_beta")],
+    1, function(row) {
+      cols <- c("allele_dose_beta", "afr_dose_beta", "allele_afr_dose_beta")
+      cols[which.max(abs(row))]
+  })
+  return(df_sig)
+}
+
+# Make plotting function
+plot_sig <- function(win_df) {
+
+  win_df_lg <- win_df %>%
+    dplyr::select(position, allele_dose_p, afr_dose_p, allele_afr_dose_p, anova_p) %>%
+    pivot_longer(cols = c(allele_dose_p, afr_dose_p, allele_afr_dose_p, anova_p),
+                 names_to = "type",
+                 values_to = "pval")
+  
+  win_df_nom_sig <- subset(win_df_lg, pval < nom_sig_thresh & type == "anova_p")
+  
+  ggplot(win_df_lg, aes(position, -log10(pval))) +
+    geom_point() +
+    geom_point(data = subset(win_df_lg, position %in% win_df_nom_sig$position),
+               aes(color = "orange")) +
+    labs(x = "Position", y = "-log10(P-Value)", color = "significant") +
+    facet_wrap(~ type) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+
+fun_split <- function(x, data, pheno) {
+  return(data.frame(
+    y = min(data[[pheno]]) - (0.1*(max(data[[pheno]]) - min(data[[pheno]]))),
+    label = length(x)))  # x comes from group = Asthma
+}
+
+# Plot split phenotype
+
+
+pheno_data <- pheno_mfvc
+dose_frame <- df_chr8
+sig_data <- win_chr8_sig
+position <- sig_pos
+pheno <- "maxFVC"
+colors <- colors
+
+plot_split <- function(pheno_data, dose_frame, sig_data, position, pheno, colors) {
+ 
+  # Merge pheno and dose frame
+  df_afr <- dose_frame %>% dplyr::filter(type == "afr_dose") %>%
+    dplyr::select(-type, -ref, -alt) %>%
+    column_to_rownames(var = "position")
+  df_afr_t <- as.data.frame(t(df_afr))
+  colnames(df_afr_t) <- paste0(colnames(df_afr_t), "_afr")
+  df_afr_t <- rownames_to_column(df_afr_t, var = "ID")
+  
+  df_allele <- dose_frame %>% dplyr::filter(type == "allele_dose") %>%
+    dplyr::select(-type, -ref, -alt) %>%
+    column_to_rownames(var = "position")
+  df_allele_t <- as.data.frame(t(df_allele))
+  colnames(df_allele_t) <- paste0(colnames(df_allele_t), "_allele")
+  df_allele_t <- rownames_to_column(df_allele_t, var = "ID")
+  
+  pheno_df_temp <- inner_join(
+    pheno_data,
+    df_afr_t,
+    by = c("TopMed_ID" = "ID"))
+  pheno_df <- inner_join(
+    pheno_df_temp,
+    df_allele_t,
+    by = c("TopMed_ID" = "ID"))
+  
+  # Get additional details for plot from sig_data
+  driving_term <- sig_data$max_abs_beta[sig_data$position == position]
+  
+  # Make format of allele dose that have alt & ref alleles
+  alt <- sig_data$alt[sig_data$position == position]
+  ref <- sig_data$ref[sig_data$position == position]
+  allele_labels <- c(
+    `0` = paste0(ref, ref),
+    `1` = paste0(ref, alt),
+    `2` = paste0(alt, alt))
+  
+  plot <- ggplot(pheno_df, aes(
+    x = factor(!!rlang::sym(paste0(position, "_allele"))),
+    y = !!rlang::sym(pheno))) +
+  geom_boxplot(aes(fill = "Combined"),
+               varwidth = TRUE, alpha = 0.7, outlier.shape = 21) +
+  geom_boxplot(aes(fill = factor(!!rlang::sym(paste0(position, "_afr")))),
+               varwidth = TRUE, alpha = 0.7, outlier.shape = 21) +
+  labs(x = "Genotype",
+       y = paste0(
+         gsub("_", "/", gsub("m", "M", pheno)),
+         ifelse(str_detect(pheno, "_"), " Ratio", " (mL)")),
+       fill = "Copies Local African Ancestry",
+       title = paste0(
+         "chr", sig_data$chr, ":", position, ":", ref, ":", alt, ", Driving Term: ", driving_term)) +
+  scale_x_discrete(labels = allele_labels) +
+  scale_fill_manual(values = c("Combined" = "transparent",  # Transparent box plot
+                             "0" = colors[1], "1" = colors[2], "2" = colors[3]),
+                    labels = c("Combined" = "Combined", "0" = "0",
+                               "1" = "1", "2" = "2")) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  stat_summary(fun.data = fun_split, fun.args = list(data = pheno_df, pheno = pheno),
+               geom = "text", aes(group = !!rlang::sym(paste0(position, "_afr"))),
+               position = position_dodge(0.5), hjust = 0.5)
+  return(plot)
+}
+
+# Get LD
+calc_peak_ld <- function(peak_snp, win_sig, dose_frame) {
+  # Get peak snp
+  peak <- paste0(
+    win_sig$position[which.min(win_sig$anova_p)], "_allele")
+  
+  # Modify dose frame, use to create SnpMatrix
+  df_allele_t <- as.data.frame(t(dose_frame %>%
+    dplyr::filter(type == "allele_dose") %>%
+    dplyr::select(-type, -ref, -alt) %>%
+    column_to_rownames(var = "position")))
+  snp_m <- new("SnpMatrix", as.matrix(df_allele_t))
+  
+  # Get pairwise LD with peak SNP
+  ld <- ld(snp_m[, which(colnames(snp_m) == peak_snp), drop = F],
+           snp_m, stats = c("R.squared"))
+  
+  # LD R2 column name is just position of peak SNP calculated with respect to
+  ld_t <- as.data.frame(t(ld)) %>%
+    rownames_to_column("pos") %>%
+    dplyr::mutate(pos = as.integer(gsub("_allele", "", pos)))
+  
+  return(ld_t)
+}
+
+# Plot locus zoom
+plot_locuszoom <- function(win_ld, chr, peak_snp) {
+  loc <- locus(data = win_ld, chrom = "chr", p = "anova_p", pos = "position",
+             ens_db = ensDb_v111, seqname = chr, labs = "position",
+             xrange = c(min(win_ld$position), max(win_ld$position)),
+             LD = as.character(peak_snp))
+  loc_plot <- locus_ggplot(loc, filter_gene_biotype = "protein_coding",
+             pcutoff = nom_sig_thresh)
+  return(loc_plot)
+}
+
+```
+
+
+# **Results**
+
+For each window, first going to check for overall model significance. For each
+variant that is significant, then going to identify the effect with the largest
+absolute value of the test statistics to determine which part of the LAAA model
+is driving that significance.
+
+For significance threshold, going to follow Dr. Ortega's and Michelle's previous
+paper: P < 10^-3 (0.001).
+
+For nominal significance, going to look at results with model P-value < 0.01.
+
+## **MaxFVC Chr5**
+
+### **LAAA Results**
+
+Looking at all results meeting at least nominal significance: `r nom_sig_thresh`
+
+```{r }
+# Get sig LAAA results & format
+win_chr5_sig <- get_sig(win_chr5, nom_sig_thresh)
+
+win_chr5_sig <- win_chr5_sig %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(chr = 5) %>%
+  dplyr::relocate(anova_p, max_abs_beta) %>%
+  dplyr::arrange(anova_p)
+
+win_chr5_sig %>%
+  dplyr::select(
+    anova_p, max_abs_beta, position, allele_dose_beta, allele_dose_p,
+    afr_dose_beta, afr_dose_p, allele_afr_dose_beta, allele_afr_dose_p)
+# datatable(win_chr5_sig)
+
+```
+
+No significant results - same as before applied MAF filter ahead of RFMix.
+
+### **Plot Model P-Values**
+
+```{r, warning = F}
+plot_sig(win_chr5)
+```
+
+
+## **MaxFVC Chr8**
+
+### **LAAA Results**
+
+Looking at all results meeting at least nominal significance: `r nom_sig_thresh`.
+
+**All:**
+
+```{r }
+# Get sig LAAA results & format
+win_chr8_sig <- get_sig(win_chr8, nom_sig_thresh)
+
+win_chr8_sig <- win_chr8_sig %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(chr = 8) %>%
+  dplyr::relocate(anova_p, max_abs_beta) %>%
+  dplyr::arrange(anova_p)
+
+win_chr8_sig %>%
+  dplyr::select(
+    position, anova_p, max_abs_beta, position, allele_dose_beta, allele_dose_p,
+    afr_dose_beta, afr_dose_p, allele_afr_dose_beta, allele_afr_dose_p)
+# datatable(win_chr8_sig)
+
+```
+
+Results include 3 out of 4 of the results before MAF filter was correctly
+applied before RFMix, and many additional new results.
+
+Confirmed the 1 result no longer significant was still in input, just that
+anova_p no longer meets significance threshold.
+
+**Summarized to keep only the first of those in complete LD:**
+
+For now, doing this by filtering to keep only one of multiple rows with
+identical alt_frq, anova_p, and max_abs_beta.
+
+```{r}
+win_chr8_sig_dedup <- win_chr8_sig %>%
+  distinct(alt_frq, anova_p, max_abs_beta, .keep_all = TRUE)
+
+win_chr8_sig_dedup %>%
+  dplyr::select(
+    position, anova_p, max_abs_beta, allele_dose_beta, allele_dose_p,
+    afr_dose_beta, afr_dose_p, allele_afr_dose_beta, allele_afr_dose_p)
+```
+
+Still have 16 results! How best to dig into these? Almost all are driven by
+the allele_afr_dose_beta. May help to see if any map to genes.
+
+For locus Zoom plot, want one version for each of the "peaks". To do this,
+need to narrow down the above to keep only top SNP from each set of physically
+close SNPs.
+
+```{r}
+# Get ranges of points within 30,000bp of each other
+win_chr8_sig_ranges <-
+  IRanges(start = win_chr8_sig$position, end = win_chr8_sig$position)
+win_chr8_sig_merged_ranges <-
+  IRanges::reduce(win_chr8_sig_ranges, min.gapwidth = 30000)
+
+# Add range group to original df
+win_chr8_sig$group <-
+  subjectHits(findOverlaps(win_chr8_sig_ranges, win_chr8_sig_merged_ranges))
+
+# Now, modify df to keep only most significant pval in each group
+
+# Group by the merged ranges and keep the row with the lowest p-value in each group
+win_chr8_sig_peaks <- win_chr8_sig %>%
+  dplyr::group_by(group) %>%
+  dplyr::slice(which.min(anova_p)) %>%
+  ungroup() %>%
+  arrange(anova_p)
+
+head(win_chr8_sig_peaks)
+```
+
+
+### **Locus Zoom Plot**
+
+Only plot most significant peak SNP:
+
+```{r}
+# Get genome annotation
+ah <- AnnotationHub()
+# query(ah, c("EnsDb", "Homo sapiens"))
+ensDb_v111 <- ah[["AH116291"]]
+
+chr8_ld <- Reduce(full_join, lapply(win_chr8_sig_peaks$position, function(pos) {
+  return(calc_peak_ld(pos, win_chr8_sig, df_chr8))
+}))
+
+win_chr8_ld <- as.data.frame(inner_join(
+  win_chr8 %>% dplyr::mutate(chr = 8),
+  chr8_ld,
+  by = c("position" = "pos")))  # should keep all entries
+
+
+chr8_peak <- win_chr8_sig_peaks$position[which.min(win_chr8_sig_peaks$anova_p)]
+
+# Plot locus zoom
+plot_chr8_lz <- plot_locuszoom(win_chr8_ld, "8", chr8_peak)
+
+```
+
+
+### **Plot with Phenotype**
+
+One for each SNP crossing our significance threshold, arranged from most to
+least significant.
+
+```{r out.width = '50%', fig.show = 'hold'}
+# Make plots
+# Using walk to suppress ## 1, 2, output during lapply
+# walk(win_chr8_sig_peaks$position, ~ {
+#   print(plot_split(pheno_mfvc, df_chr8, win_chr8_sig, .x, "maxFVC"))
+# })
+
+```
+
+**Example for position 55541918 updated compared to previous results:**
+
+Updated TT category has 10 with 0 copies of LAA, 21 with 1 copy, 4 with 2.
+Previous TT category had 8 with 0 copies of LAA, 23 with 1 copy, 4 with 2.
+
+Updated TC category has 93 with 0 copies, 82 with 1 copy, 4 with 2.
+Previous TC category had 92 with 0 copies, 85 with 1 copy, 2 with 2.
+
+Updated CC category has 65 with 0 copies, 64 with 1, 5 with 2.
+Previous CC category had 65 with 0 copies, 64 with 1, 5 with 2.
+
+
+### **BiomaRt Lookup**
+
+```{r}
+mart <- useMart("ensembl", dataset="hsapiens_gene_ensembl")  # default is hg38
+
+win_chr8_sig$chr = 8
+result <- NA
+
+result <- do.call(rbind, lapply(1:nrow(win_chr8_sig), function(i) {
+  result <- getBM(
+    attributes = c('ensembl_gene_id', 'hgnc_symbol', 'chromosome_name', 'start_position', 'end_position'),
+    filters = c('chromosome_name','start','end'),
+    values = list(win_chr8_sig$chr[i], win_chr8_sig$position[i], win_chr8_sig$position[i]),
+    mart = mart)
+}))
+
+head(result)
+
+```
+
+All the SNPs combined contain genes:
+
++ ENSG00000206579 XKR4
++ ENSG00000254254 PENK-AS1
++ ENSG00000246430 LINC00968 
+
+
+**More about XKR4:**
+
+From the human protein atlas: transporter membrane protein. Phospholipid
+scramblase that promotes phosphatidylserine exposure on apoptotic cell surface.
+Enables phospholipid scramblase activity. Involved in phosphatidylserine
+exposure on apoptotic cell surface. Predicted to be integral component of
+membrane. Predicted to be active in plasma membrane.
+
+Looks like has been previously associated with lung function (specifically
+change in FVC, FEV1) in article "Epigenome-wide association study of lung
+function level and its change", [PMID 31073081](https://erj.ersjournals.com/content/erj/early/2019/03/27/13993003.00457-2019.full.pdf). 
+
+[Article](https://www.sciencedaily.com/releases/2013/10/131025091938.htm) about
+an ASHG abstract in 2013 from Brigham and Women's Hospital: SNPs in XKR4 gene
+associated with BDRPRED (change as % of predicted FEV1) & BDRBASE (change as %
+of baseline FEV1).
+
+### **Plot Model P-Values**
+
+```{r, warning = F}
+plot_sig(win_chr8)
+```
+
+### **AF**
+
+*TODO: need to update automation for this section.*
+
+## **maxFEV1/FVC Chr10**
+
+### **LAAA Results**
+
+**All:**
+
+```{r}
+# Get LAAA results & format
+win_chr10_sig <- get_sig(win_chr10, nom_sig_thresh)
+
+win_chr10_sig <- win_chr10_sig %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(chr = 10) %>%
+  dplyr::relocate(anova_p, max_abs_beta) %>%
+  dplyr::arrange(anova_p)
+
+win_chr10_sig %>%
+  dplyr::select(
+    position, anova_p, max_abs_beta, allele_dose_beta, allele_dose_p,
+    afr_dose_beta, afr_dose_p, allele_afr_dose_beta, allele_afr_dose_p)
+# datatable(win_chr10_sig)
+
+```
+
+
+**Summarized to keep only the first of those in complete LD:**
+
+For now, doing this by filtering to keep only one of multiple rows with
+identical alt_frq, anova_p, and max_abs_beta.
+
+```{r}
+win_chr10_sig_dedup <- win_chr10_sig %>%
+  distinct(alt_frq, anova_p, max_abs_beta, .keep_all = TRUE)
+
+win_chr10_sig_dedup %>%
+  dplyr::select(
+    position, anova_p, max_abs_beta, allele_dose_beta, allele_dose_p,
+    afr_dose_beta, afr_dose_p, allele_afr_dose_beta, allele_afr_dose_p)
+```
+
+Before MAF filter was correctly applied, we had 11 deduplicated significant
+results, now we have 7.
+
+For locus Zoom plot, want one version for each of the "peaks". To do this,
+need to narrow down the above to keep only top SNP from each set of physically
+close SNPs.
+
+```{r}
+# Get ranges of points within 30,000bp of each other
+win_chr10_sig_ranges <-
+  IRanges(start = win_chr10_sig$position, end = win_chr10_sig$position)
+win_chr10_sig_merged_ranges <-
+  IRanges::reduce(win_chr10_sig_ranges, min.gapwidth = 30000)
+
+# Add range group to original df
+win_chr10_sig$group <-
+  subjectHits(findOverlaps(win_chr10_sig_ranges, win_chr10_sig_merged_ranges))
+
+# Now, modify df to keep only most significant pval in each group
+
+# Group by the merged ranges and keep the row with the lowest p-value in each group
+win_chr10_sig_peaks <- win_chr10_sig %>%
+  dplyr::group_by(group) %>%
+  dplyr::slice(which.min(anova_p)) %>%
+  ungroup() %>%
+  arrange(anova_p)
+
+head(win_chr10_sig_peaks)
+```
+
+### **Locus Zoom Plot**
+
+Only plot most significant peak SNP:
+
+```{r}
+# Calculate LD
+chr10_ld <- Reduce(full_join, lapply(win_chr10_sig_peaks$position, function(pos) {
+  return(calc_peak_ld(pos, win_chr10_sig, df_chr10))
+}))
+
+# Plot LD on locus zoom plot
+win_chr10_ld <- as.data.frame(inner_join(
+  win_chr10 %>% dplyr::mutate(chr = 10),
+  chr10_ld,
+  by = c("position" = "pos")))  # should keep all entries
+
+chr10_peak <- win_chr10_sig_peaks$position[which.min(win_chr10_sig_peaks$anova_p)]
+
+
+# Plot locus zoom
+plot_chr10_lz <- plot_locuszoom(win_chr10_ld, "10", chr10_peak)
+plot_chr10_lz
+
+```
+
+
+### **Plot with Phenotype**
+
+One for each SNP crossing our significance threshold, arranged from most to least significant.
+
+```{r out.width = '50%', fig.show = 'hold'}
+# Make plots
+# Using walk to suppress ## 1, 2, output during lapply
+# walk(win_chr10_sig_peaks$position, ~ {
+#   print(plot_split(pheno_mff, df_chr10, win_chr10_sig, .x, "maxFEV1_FVC"))
+# })
+
+```
+
+### **Draft Plot for Publication**
+
+*TODO: to be added if decide to include any/all of the above!*
+
+### **BiomaRt Lookup**
+
+```{r}
+win_chr10_sig_dedup$chr = 10
+
+result <- do.call(rbind, lapply(1:nrow(win_chr10_sig_dedup), function(i) {
+  result <- getBM(
+    attributes = c('ensembl_gene_id', 'hgnc_symbol', 'chromosome_name', 'start_position', 'end_position'),
+    filters = c('chromosome_name','start','end'),
+    values = list(win_chr10_sig_dedup$chr[i], win_chr10_sig_dedup$position[i], win_chr10_sig_dedup$position[i]),
+    mart = mart)
+}))
+
+head(result)
+
+```
+
+
++ PCDH15 is in the cadherin superfamily
++ JACI association between different SNP in PCDH15 for FEV1
+  [PMID 23541324](https://www.jacionline.org/article/S0091-6749(13)00261-3/fulltext)
++ PCDH15 listed on dbGAP gene-trait association with asthma
+[see here](https://maayanlab.cloud/Harmonizome/gene_set/Asthma/dbGAP+Gene-Trait+Associations)
+
++ ENSG00000236958 appears to be a long non-coding RNA.
+
+
+### **Plot Model P-Values**
+
+```{r}
+plot_sig(win_chr10)
+```
+
+### **AF**
+
+*TODO: need to update automation for this section.*
+
+
+## **MaxFVC Chr17**
+
+### **LAAA Results**
+
+Looking at all results meeting at least nominal significance: `r nom_sig_thresh`
+
+```{r}
+# Get sig LAAA results & format
+win_chr17_sig <- get_sig(win_chr17, nom_sig_thresh)
+
+win_chr17_sig <- win_chr17_sig %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(chr = 17) %>%
+  dplyr::relocate(anova_p, max_abs_beta) %>%
+  dplyr::arrange(anova_p)
+
+win_chr17_sig %>%
+  dplyr::select(
+    position, anova_p, max_abs_beta, position, allele_dose_beta, allele_dose_p,
+    afr_dose_beta, afr_dose_p, allele_afr_dose_beta, allele_afr_dose_p)
+# datatable(win_chr17_sig)
+
+```
+
+This result is new - chr17 maxFVC before MAF filter didn't have any results.
+
+For locus Zoom plot, want one version for each of the "peaks". To do this,
+need to narrow down the above to keep only top SNP from each set of physically
+close SNPs.
+
+```{r}
+# Get ranges of points within 30,000bp of each other
+win_chr17_sig_ranges <-
+  IRanges(start = win_chr17_sig$position, end = win_chr17_sig$position)
+win_chr17_sig_merged_ranges <-
+  IRanges::reduce(win_chr17_sig_ranges, min.gapwidth = 30000)
+
+# Add range group to original df
+win_chr17_sig$group <-
+  subjectHits(findOverlaps(win_chr17_sig_ranges, win_chr17_sig_merged_ranges))
+
+# Now, modify df to keep only most significant pval in each group
+
+# Group by the merged ranges and keep the row with the lowest p-value in each group
+win_chr17_sig_peaks <- win_chr17_sig %>%
+  dplyr::group_by(group) %>%
+  dplyr::slice(which.min(anova_p)) %>%
+  ungroup() %>%
+  arrange(anova_p)
+
+head(win_chr17_sig_peaks)
+```
+
+### **Locus Zoom Plot**
+
+Only plot most significant peak SNP:
+
+```{r}
+# Calculate LD
+chr17_ld <- Reduce(full_join, lapply(win_chr17_sig_peaks$position, function(pos) {
+  return(calc_peak_ld(pos, win_chr17_sig, df_chr17))
+}))
+
+# Plot LD on locus zoom plot
+win_chr17_ld <- as.data.frame(inner_join(
+  win_chr17 %>% dplyr::mutate(chr = 17),
+  chr17_ld,
+  by = c("position" = "pos")))  # should keep all entries
+
+chr17_peak <- win_chr17_sig_peaks$position[which.min(win_chr17_sig_peaks$anova_p)]
+
+# Plot locus zoom
+plot_chr17_lz <- plot_locuszoom(win_chr17_ld, "17", chr17_peak)
+plot_chr17_lz
+
+```
+
+
+### **Plot with Phenotype**
+
+One for each SNP crossing our significance threshold, arranged from most to least significant.
+
+```{r out.width = '50%', fig.show = 'hold'}
+# Make plots
+# Using walk to suppress ## 1, 2, output during lapply
+# walk(win_chr17_sig_peaks$position, ~ {
+#   print(plot_split(pheno_mfvc, df_chr17, win_chr17_sig, .x, "maxFVC"))
+# })
+
+```
+
+### **Plot Model P-Values**
+
+```{r}
+plot_sig(win_chr17)
+```
+
+
+## **Compare Allele Estimate**
+
+Want to compare full LAAA model to model run with only allele term and
+covariates. Looking at this for all nominally significant results from both
+regions combined, colored by chr/phenotype.
+
+*TO NOTE: this is from older version of report, only looks at chr8 & chr10.*
+
+```{r}
+win_chr8_sig$pheno <- "maxFVC"
+win_chr10_sig$pheno <- "maxFEV1_FVC"
+sig_comb <- full_join(win_chr8_sig, win_chr10_sig)
+
+ggplot(sig_comb, aes(x = allele_dose_beta, y = unadj_allele_dose_beta,
+                     color = pheno)) +
+  geom_point(alpha = 0.5) +
+  coord_fixed() +
+  xlim(c(-4,4)) +
+  ylim(c(-4,4))
+```
+
+Also look at as table:
+
+```{r}
+sig_comb %>%
+  arrange(pheno, position) %>%
+  dplyr::select(pheno, position, unadj_allele_dose_beta, unadj_allele_dose_p,
+                allele_dose_beta, allele_dose_p)
+```
+
+
+
+
+# **Plot for Publication**
+
+### **Figure 4**
+
+```{r}
+# Switch maxFVC column from L to mL
+pheno_mfvc <- pheno_mfvc %>%
+  dplyr::mutate(maxFVC_L = maxFVC,
+                maxFVC = maxFVC * 1000)
+
+sig_pos <- win_chr8_sig$position[which.min(win_chr8_sig$anova_p)]
+
+colors = c(color_lfvc, color_bfvc, color_maxfvc)
+plot_chr8_pheno <- plot_split(
+  pheno_mfvc, df_chr8, win_chr8_sig, sig_pos, "maxFVC", colors)
+
+# plot_chr8_lz
+plot_chr8_pheno + theme(plot.title = element_blank())
+
+p_comb <- ggarrange(
+  plot_chr8_lz,
+  plot_chr8_pheno + theme(plot.title = element_blank()),
+  labels = c("A", "B"), ncol=2, nrow=1)
+
+ggsave(
+  "dissemination/SARP_ancestry_paper_draft/figures/fig4_laaa_maxfvc_top_hit.png",
+  p_comb, units = c("in"), width = 10, height = 5)
+
+```
+
+### **Supplemental Figure 3**
+
+```{r}
+
+### Chr10 MaxFEV1/FVC
+sig_pos <- win_chr10_sig$position[which.min(win_chr10_sig$anova_p)]
+
+colors = c(color_lratio, color_bratio, color_maxratio)
+plot_chr10_pheno <- plot_split(
+  pheno_mff, df_chr10, win_chr10_sig, sig_pos, "maxFEV1_FVC", colors)
+
+# plot_chr10_lz
+plot_chr10_pheno + theme(plot.title = element_blank())
+
+### Chr17 MaxFVC
+sig_pos <- win_chr17_sig$position[which.min(win_chr17_sig$anova_p)]
+
+colors = c(color_lfvc, color_bfvc, color_maxfvc)
+plot_chr17_pheno <- plot_split(
+  pheno_mfvc, df_chr17, win_chr17_sig, sig_pos, "maxFVC", colors)
+
+# plot_chr8_lz
+plot_chr17_pheno + theme(plot.title = element_blank())
+
+### Combine
+p_comb <- ggarrange(
+  plot_chr10_lz,
+  plot_chr10_pheno + theme(plot.title = element_blank()),
+  plot_chr17_lz,
+  plot_chr17_pheno + theme(plot.title = element_blank()),
+  labels = c("A", "B", "C", "D"), ncol=2, nrow=2)
+
+ggsave(
+  "dissemination/SARP_ancestry_paper_draft/figures/fig_s3_laaa_maxfvc_maxratio_hits.png",
+  p_comb, units = c("in"), width = 10, height = 10)
+
+```
+
+
+
+# **Write Out**
+
+Specifically writing out all SNPs that passed our significance threshold for
+Abhishek to use in replication analysis.
+
+Also adding biomaRt annotation of RSID here first.
+
+## **Chr8**
+
+```{r}
+# Use biomaRt to annotate RSID
+win_chr8_sig <- win_chr8_sig %>%
+  dplyr::mutate(chr_pos_pos = paste0(chr, ":", position, ":", position),
+                chr_pos_ref_alt = paste0("chr", chr, ":", position, ":", ref, ":", alt))
+
+snp_mart <- useEnsembl(
+  biomart="ENSEMBL_MART_SNP", dataset="hsapiens_snp", mirror = "useast")
+
+win_chr8_sig_result <- getBM(
+  attributes = c('refsnp_id', 'allele', 'chrom_start'),
+  filters = 'chromosomal_region',
+  values = win_chr8_sig$chr_pos_pos,
+  mart = snp_mart)
+
+win_chr8_sig_mod <- left_join(
+  win_chr8_sig, win_chr8_sig_result, by = c("position" = "chrom_start")) %>%
+  dplyr::mutate(ref_alt = paste0(ref, "/", alt))
+```
+
+For biomaRt RSID annotation, checking those RSIDs where position was identified
+more than once:
+
+```{r}
+chr8_dup_pos <- win_chr8_sig_mod %>%
+  count(position) %>%
+  dplyr::filter(n > 1) %>%
+  pull(position) # only 1
+
+win_chr8_sig_mod %>% dplyr::filter(position %in% chr8_dup_pos) %>%
+  dplyr::select(position, chr_pos_ref_alt, ref_alt, refsnp_id, allele)
+
+# Keep only one match, add pheno
+win_chr8_sig_mod_exp <- win_chr8_sig_mod %>%
+  dplyr::filter(!(position == chr8_dup_pos & refsnp_id != "rs7820046")) %>%
+  dplyr::mutate(pheno = "maxFVC")
+# n_distinct(win_chr8_sig_mod$position)  # 24 / 24
+```
+
+Based on gnomAd and ref/alt alleles, RSID rs7820046 should be the correct match
+for chr8:55567655:T:C.
+
+## **Chr10**
+
+```{r}
+# Use biomaRt to annotate RSID
+win_chr10_sig <- win_chr10_sig %>%
+  dplyr::mutate(chr_pos_pos = paste0(chr, ":", position, ":", position),
+                chr_pos_ref_alt = paste0("chr", chr, ":", position, ":", ref, ":", alt))
+
+win_chr10_sig_result <- getBM(
+  attributes = c('refsnp_id', 'allele', 'chrom_start'),
+  filters = 'chromosomal_region',
+  values = win_chr10_sig$chr_pos_pos,
+  mart = snp_mart)
+
+win_chr10_sig_mod <- left_join(
+  win_chr10_sig, win_chr10_sig_result, by = c("position" = "chrom_start")) %>%
+  dplyr::mutate(ref_alt = paste0(ref, "/", alt))
+```
+
+For biomaRt RSID annotation, checking those RSIDs where position was identified
+more than once:
+
+```{r}
+chr10_dup_pos <- win_chr10_sig_mod %>%
+  count(position) %>%
+  dplyr::filter(n > 1) %>%
+  pull(position) # 3
+
+win_chr10_sig_mod %>% dplyr::filter(position %in% chr10_dup_pos) %>%
+  dplyr::select(position, chr_pos_ref_alt, ref_alt, refsnp_id, allele)
+
+# Keep only one match, add pheno
+win_chr10_sig_mod_exp <- win_chr10_sig_mod %>%
+  dplyr::filter(
+    !(position == "55137025" & refsnp_id != "rs7905410"),
+    !(position == "55137026" & refsnp_id != "rs7916351"),
+    !(position == "56517980" & refsnp_id != "rs939657366")) %>%
+  dplyr::mutate(pheno = "maxFEV1_FVC")
+# n_distinct(win_chr10_sig_mod$position)  # 15 / 15
+```
+
+Based on gnomAd (or dbSNP) and ref/alt alleles:
+
++ RSID rs7905410 should be the correct match for chr10:55137025:T:C
++ RSID rs7916351 should be the correct match for chr10:55137026:G:A
++ RSID rs939657366 should be the correct match for chr10:56517980:T:A
+
+## **Chr17**
+
+```{r}
+# Use biomaRt to annotate RSID
+win_chr17_sig <- win_chr17_sig %>%
+  dplyr::mutate(chr_pos_pos = paste0(chr, ":", position, ":", position),
+                chr_pos_ref_alt = paste0("chr", chr, ":", position, ":", ref, ":", alt))
+
+# BiomaRt failing for this SNP - try manual lookup on gnomAd
+# win_chr17_sig_result <- getBM(
+#   attributes = c('refsnp_id', 'allele', 'chrom_start'),
+#   filters = 'chromosomal_region',
+#   values = win_chr17_sig$chr_pos_pos,
+#   mart = snp_mart)
+# win_chr17_sig$chr_pos_ref_alt  # "chr17:79396701:A:G"
+# rs907901
+
+win_chr17_sig_mod <- win_chr17_sig %>%
+  dplyr::mutate(refsnp_id = "rs907901",
+                pheno = "maxFVC")
+```
+
+## **Write Out All Chr**
+
+*TO NOTE: re-loaded output significant results and added max_abs_beta here*
+*because at time biomaRt was stalling so couldn't re-run full report.*
+
+```{r}
+merge_temp <- full_join(
+  win_chr8_sig_mod_exp,
+  win_chr10_sig_mod_exp)  # should be 15 + 24 = 39
+merge <- full_join(
+  merge_temp,
+  win_chr17_sig_mod)  # should be 39 + 1 = 40
+
+# Modify all for export
+# Group here was used to group plotting windows, so removing when write out
+merge_exp <- merge %>%
+  dplyr::select(-chr, -group, -chr_pos_pos, -allele, -ref_alt, -max_abs_beta) %>%
+  dplyr::relocate(anova_p, .after = "n") %>%
+  dplyr::relocate(pheno, chr_pos_ref_alt, refsnp_id)
+
+# merge_exp <- read_tsv("data/laaa_wgs_new_2/output/laaa_significant_results.txt")
+
+merge_exp$max_abs_beta <- apply(
+    merge_exp[, c("allele_dose_beta", "afr_dose_beta", "allele_afr_dose_beta")],
+    1, function(row) {
+      cols <- c("allele_dose_beta", "afr_dose_beta", "allele_afr_dose_beta")
+      cols[which.max(abs(row))]
+  })
+
+merge_exp <- merge_exp %>%
+  dplyr::relocate(max_abs_beta, .after = pheno)
+
+# Write out
+write_tsv(
+  merge_exp,
+  "data/laaa_wgs_new_2/output/laaa_significant_results.txt")
+```
+
+
+# **Session Info**
+
+```{r session_info}
+sessionInfo()
+```
