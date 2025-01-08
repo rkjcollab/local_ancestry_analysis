@@ -31,7 +31,7 @@ mv -r rfmix_input/ /path/to/repo
 
 ## **local_anc_afr_eur**
 
-This sub-folder contains all the scripts needed to calculated two-way (AFR and
+This sub-folder contains all the scripts needed to calculate two-way (AFR and
 EUR) local ancestry estimates using RFMix.
 
 Bash scripts and steps are described below. For each bash script, there is a
@@ -77,12 +77,42 @@ mapping inout).
 
 ## **laaa_fine_mapping**
 
-*TODO: to be added*
+This sub-folder contains all the scripts needed to run local ancestry adjusted
+allelic association (LAAA) fine mapping of admixture mapping peaks. Before this
+step is run, the local_anc_afr_eur subfolder must be run on the input data,
+which should be phased data (WGS or imputed) for fine mapping. Additionally,
+admixture mapping peak regions need to be identified, either by running the
+admixture_mapping subfolder or by using regions identified in another dataset.
 
+### **To Process Phased Data (WGS or Imputed)**
+
+1. 1.1_calc_rfmix_gwide_ancestry.sh
+
+The first step calculates a global ancestry proportion based on the RFMix
+estimates which is used as a covariate in LAAA. For this first step to be run,
+you will have to already have results for all chromosomes from RFMix.
+
+*TODO: add discussion here for alternative if already have global ancestry.*
+
+2. 2.1_create_dose_frames.sh
+
+The second step will use the peak region files from admixture mapping (file name
+format “{PHENO}_admixture_peak_contig_region_chr{#}.txt”) as inputs.
+
+*3. 2.2_make_laaa_pheno.R*
+
+*TO NOTE: this script is not flexible.* The third step is to make the phenotype
+file to be used for analysis. The script provided in the repo is an example 
+script used to create a file in the correct format. The file should be tab-
+delimited, have a .txt extension, and include column names.
+
+4. 2.3_run_models.sh
+
+The fourth step will run the LAAA model.
 
 # **Additional Data**
 
-### shapeit_input.tar.gx
+### shapeit_input.tar.gz
 
 Present in repository and automatically loaded into container.
 
@@ -92,5 +122,40 @@ Present in repository and automatically loaded into container.
 
 Too large to keep on repository.
 
-*TODO: find better way tot share?*
-*TODO: add details!*
+*TODO: find better way to share?*
+
+The files in rfmix_input folder were prepared by Michelle Daya, and these notes
+were included in her README:
+<em>
+The data is from the following sources:
+
++ genetic_map_hapmap
+
+chr\<nr\>.txt files, required for ShapeIt, as per the following ShapeIt page:
+https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.html#gmap .
+
+The hapmap genetic map file was downloaded from:
+	http://www.shapeit.fr/files/genetic_map_b37.tar.gz on 29 April 2016.
+
++ genetic_map_tgp
+
+Genetic map files that are required by RFMix. 
+
+The map files used were downloaded from:
+	 https://github.com/joepickrell/1000-genomes-genetic-maps/tree/master/interpolated_from_hapmap on 29 April 2016.
+
+The files were renamed to chr1.txt, chr2.txt, ..., chr22.txt
+
++ tgp
+
+Reference (ancestral) populations required by RFmix - 99 CEU and 108 YRI. 
+
+Downloaded the VCF files in ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/
+to data/raw/tgp_release_20130502. Created the following file from the first
+worksheet of http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20130606_sample_info/20130606_sample_info.xlsx:
+<i>ceu_yri_ids.txt</i> in this same directory, containing a list of all CEU and
+YRI IDs. Ran the script <code>create_tgp_input_files.sh</code> in the scripts
+directory, to extract the already phased TGP CEU and YRI subjects into IMPUTE
+file format (which is easy to later on merge with the admixed ShapeIT phased
+files).
+</em>
