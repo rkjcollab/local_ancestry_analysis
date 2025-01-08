@@ -5,7 +5,7 @@ args <- commandArgs(trailingOnly = TRUE)
 # but should be found if run with -co. Code automatically looks for batch 1 SNPs
 # per window file, as it is the same for all batches.
 
-sample.list.file.name <-  # <- args[1]
+sample.list.file.name <- args[1]
 rfmix.dir <- args[2]
 out.file.name <- paste0(rfmix.dir, "/rfmix_gwide.txt")
 
@@ -59,7 +59,7 @@ for (chr in 1:22) {
 }
 
 # Get IID from fam file (col)
-frame <- data.frame(IID = fam.file$IID)
+frame <- data.frame(IID = sample.list.file$V1)
 
 # Complete frame output
 frame$RFMIX_GW_AFR <- NA
