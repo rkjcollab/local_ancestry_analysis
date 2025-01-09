@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # TO NOTE: update the paths below to set the project directory (proj_dir),
-# the output directory (out_dir_prefix), the input data directory (data_dir),
-# and the directory containing admixture mapping peak regions in hg19 
-# written out by summary report (admix_dir).
+# the output directory (out_dir_prefix), the path to RFMix results split by
+# chromosome (rfmix_results_dir), and the directory containing admixture
+# mapping peak regions in hg19 written out by summary report (admix_dir).
 
 # Script outputs dose frames in hg19 and hg38.
 
@@ -15,10 +15,11 @@
     # chr#_local_ancestry_samples.txt
 
 # Set inputs
+
 # Test WGS
 proj_dir="${RKJCOLLAB}/Collabs/ortega"
 out_dir_prefix="${proj_dir}/data/pipeline_test_data/laaa_fine_mapping/laaa_wgs/dose_frames"
-data_dir="${proj_dir}/data/rfmix_wgs_new_2/output_o"
+rfmix_results_dir="${proj_dir}/data/pipeline_test_data/local_anc_afr_eur/wgs_output"
 admix_dir="${proj_dir}/data/pipeline_test_data/laaa_fine_mapping/pheno_analysis/output"
 
 # Loop over peak admixture mapping regions and make dose frames for each
@@ -39,5 +40,5 @@ for admix_file in $admix_file_list; do
     out_dir="${out_dir_prefix}/region_hg19_${pheno}_chr${chr}"
 
     bash make_dose_frames/create_dose_frames.sh \
-        $chr $start $end $pheno "${data_dir}/chr${chr}" $out_dir
+        $chr $start $end $pheno "${rfmix_results_dir}/chr${chr}" $out_dir
 done
