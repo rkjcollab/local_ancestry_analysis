@@ -20,7 +20,7 @@ proj_dir="${RKJCOLLAB}/Collabs/ortega"
 out_dir_prefix="${proj_dir}/data/pipeline_test_data/laaa_fine_mapping/laaa_wgs/output"
 dose_dir="${proj_dir}/data/pipeline_test_data/laaa_fine_mapping/laaa_wgs/dose_frames"
 pheno_file='${proj_dir}/data/pheno/SARP123_CSGA_348_laaa_${pheno}_pheno.txt'
-    # single quotes are required here for substitution of $pheno below
+    # single quotes are required here for substitution of $proj_dir and $pheno below
     # pheno string in name must match column name with phenotype values
 pheno_id_col_name="TopMed_ID"  # should match format in RFMix output
 cov_list="group,age,sex,ht,bmi,RFMIX_GW_AFR"  # should be passed as "cov1,cov2" column names in pheno file
@@ -44,7 +44,7 @@ for dose in $dose_dir_list; do
     mkdir $out_dir
 
     Rscript run_models/run_models.R \
-        $pheno $chr $dose_dir $out_dir $pheno_file $pheno_id_col_name $cov_list
+        $pheno $chr ${dose_dir}/${dose} $out_dir $pheno_file_pheno $pheno_id_col_name $cov_list
 
 done
 
