@@ -11,8 +11,7 @@
         # does not matter which chromosome or if all chromosomes concatenated
     # Phased data: set input_file_name to input_vcf in job_prep_input_phased.batch,
         # does not matter which chromosome or if all chromosomes concatenated
-# Also set the path to RFMix results split by chromosome (rfmix_results dir), and the
-# path to the code directory (code_dir).
+# Also set the path to RFMix results split by chromosome (rfmix_results dir).
 
 # Scripts assume RFMix output file names are as output by RFMix:
     # chr#_local_ancestry.0.Viterbi.txt
@@ -21,9 +20,6 @@
     # chr#_local_ancestry_samples.txt
     # chr#_local_ancestry_batch1.0.SNPsPerWindow.txt (if found in dir, means
         # RFMix was run with -co option)
-
-# Set code directory to laaa_fine_mapping subfolder of repo
-code_dir="/Users/slacksa/repos/local_ancestry_analysis/laaa_fine_mapping"
 
 # Test imputed
 # input_file_name="${RKJCOLLAB}/Collabs/ortega/data/pipeline_test_data/imp/chr22_small.vcf"
@@ -48,5 +44,5 @@ else
 fi
 
 # Calculate RFMIX genome-wide ancestry
-Rscript ${code_dir}/calc_gwide_ancestry/calc_rfmix_gwide_ancestry.R \
+Rscript calc_gwide_ancestry/calc_rfmix_gwide_ancestry.R \
     "${input_file_prefix}_sample_list.txt" $rfmix_results_dir
