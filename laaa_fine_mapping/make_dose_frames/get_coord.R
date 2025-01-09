@@ -15,6 +15,9 @@ if (length(hg19.begin.index) == 0) {
   hg19pos.delta <- begin.hg19 - hg19pos
   hg19pos.delta[hg19pos.delta < 0 ] <- NA
   hg19.begin.index <- which.min(hg19pos.delta)
+  if (length(hg19.begin.index) == 0) {
+    stop("Start of region for fine mapping not in input data.")
+  }
 }
 hg19.end.index <- which(hg19pos == end.hg19)
 # Find the position after the specified beginning that is closest
@@ -22,6 +25,9 @@ if (length(hg19.end.index) == 0) {
   hg19pos.delta <- hg19pos - end.hg19
   hg19pos.delta[hg19pos.delta < 0 ] <- NA
   hg19.end.index <- which.min(hg19pos.delta)
+  if (length(hg19.end.index) == 0) {
+    stop("End of region for fine mapping not in input data.")
+  }
 }
 
 cat(hg19pos[hg19.begin.index],
