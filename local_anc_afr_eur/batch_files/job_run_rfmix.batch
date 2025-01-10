@@ -4,11 +4,11 @@
 #SBATCH --partition=amilan
 #SBATCH --ntasks=64
 #SBATCH --job-name="rfmix"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_o/job_run_rfmix_wgs.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_output_wgs_o/job_run_rfmix_wgs.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/wgs_output/job_run_rfmix_wgs.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/wgs_output/job_run_rfmix_wgs.err"
 #SBATCH --account=amc-general
 #SBATCH --mem=10G
-#SBATCH --time=24:00:00
+#SBATCH --time=4:00:00
 
 # TO NOTE: update the variables to set the data directory (data_dir), code
 # directory (code_dir), the output directory (out_dir), the SHAPEIT input
@@ -19,7 +19,7 @@
 data_dir="/scratch/alpine/sslack@xsede.org/ortega"
 code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
 nr_batch=50  # 50 based on previous examples
-collapse_flag="-o"  # either -co to collapse or -o to not
+collapse_flag="-o"  # either -co to collapse (admix map) or -o to not (LAAA)
 
 # Test chip
 # out_dir="${data_dir}/pipeline_test_data/chip_output"
@@ -28,10 +28,10 @@ collapse_flag="-o"  # either -co to collapse or -o to not
 # batch="22"
 
 # Test WGS
-# out_dir="${data_dir}/pipeline_test_data/wgs_output"
-# shapeit_dir="${data_dir}/pipeline_test_data/wgs_output"
-# rfmix_input="${code_dir}/rfmix_input"
-# batch="10"
+out_dir="${data_dir}/pipeline_test_data/wgs_output"
+shapeit_dir="${data_dir}/pipeline_test_data/wgs_output"
+rfmix_input="${code_dir}/rfmix_input"
+batch="10"
 
 # Test imputed
 # out_dir="${data_dir}/pipeline_test_data/imp_output"
@@ -40,10 +40,10 @@ collapse_flag="-o"  # either -co to collapse or -o to not
 # batch="22"
 
 # Re-run WGS data
-out_dir="${data_dir}/rfmix_output_wgs_o"
-shapeit_dir="${data_dir}/shapeit_format"
-rfmix_input="${code_dir}/rfmix_input"
-batch="17"
+# out_dir="${data_dir}/rfmix_output_wgs_o"
+# shapeit_dir="${data_dir}/shapeit_format"
+# rfmix_input="${code_dir}/rfmix_input"
+# batch="17"
 
 cd "$out_dir"  # so logs saved in output directory
 
