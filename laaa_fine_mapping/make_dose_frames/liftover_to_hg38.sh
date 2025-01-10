@@ -20,7 +20,7 @@ if [[ $chr =~ ^[0-9]+$ ]]; then
     sed "s/^/$chr /" "$out_dir"/tmp_c2_3_4.txt | \
         tail -n +2 > "$out_dir"/tmp_${chr}_in.bed  # SDS added code here
 
-    CrossMap.py bed make_dose_frames/hg19ToHg38.over.chain \
+    CrossMap bed make_dose_frames/hg19ToHg38.over.chain \
                 "$out_dir"/tmp_${chr}_in.bed  \
                 "$out_dir"/tmp_${chr}_out.bed
 
@@ -31,7 +31,7 @@ else
         > "$out_dir"/tmp_c1_c2_3_4.txt
     tail -n +2 "${out_dir}"/tmp_c1_c2_3_4.txt > "$out_dir"/tmp_in.bed  # SDS added code here
 
-    CrossMap.py bed make_dose_frames/hg19ToHg38.over.chain \
+    CrossMap bed make_dose_frames/hg19ToHg38.over.chain \
                 "$out_dir"/tmp_in.bed  \
                 "$out_dir"/tmp_out.bed
 
