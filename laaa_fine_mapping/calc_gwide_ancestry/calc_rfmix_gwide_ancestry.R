@@ -18,6 +18,7 @@ total.nr.snps <- 0
 total.nr.afr.snps <- as.matrix(rep(0, nr.haplos))
 
 for (chr in 1:22) {
+  print(paste0("Processing chromosome ", chr, "."))
   anc <- read.table(paste0(
     rfmix.dir, "/chr", chr, "/chr", chr, "_local_ancestry.0.Viterbi.txt"))
   # Get number of SNPs from SNP list
