@@ -21,8 +21,8 @@
 # rfmix_results_dir="${RKJCOLLAB}/Collabs/ortega/data/pipeline_test_data/local_anc_afr_eur/wgs_output"
 
 # Test BARD
-data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega/data/pipeline_test_data/bard_from_abhishek"
-code_dir="/Users/slacksa/repos/local_ancestry_analysis/laaa_fine_mapping"
+data_dir="/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek"
+code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/laaa_fine_mapping"
 input_file_name="${data_dir}/imp/chr1.dose.first10krows.vcf"
 rfmix_results_dir="${data_dir}/imp_output"
 
