@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# TO NOTE: update the input_file_name path to the same input used in the first step
-# of the local_anc_afr_eur subfolder:
+# TO NOTE: First, set the paths to the data directory and the code directory, which
+# will be bound to the container. Then update the input_file_name path to the same
+# input used in the first step of the local_anc_afr_eur subfolder:
     # Unphased data: set input_file_name to plink_input in job_prep_input_unphased.batch,
         # does not matter which chromosome or if all chromosomes concatenated
     # Phased data: set input_file_name to input_vcf in job_prep_input_phased.batch,
         # does not matter which chromosome or if all chromosomes concatenated
-# Also set the path to RFMix results split by chromosome (rfmix_results dir).
+# Finally, set the path to RFMix results split by chromosome (rfmix_results dir).
 
 # Test imputed
 # input_file_name="${RKJCOLLAB}/Collabs/ortega/data/pipeline_test_data/imp/chr22_small.vcf"
