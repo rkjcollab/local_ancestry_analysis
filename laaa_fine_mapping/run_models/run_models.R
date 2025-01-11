@@ -1,7 +1,5 @@
 #!/usr/bin/env Rscript
 
-# library(plyr)
-library(tidyverse)
 args <- commandArgs(trailingOnly = TRUE)
 
 pheno <- args[1]
@@ -20,8 +18,8 @@ source("run_models/models_lung_function.R")
 
 # Get the model frame & set indicated ID column to "id"
 phenos <- read.delim(pheno.file, stringsAsFactors = F)
-pheno.frame <- phenos %>%
-  dplyr::mutate(id = !!sym(pheno_id_col_name))
+pheno.frame <- phenos
+pheno.frame$id = pheno.frame[[pheno_id_col_name]]
 
 # Load dose frames
 allele.frame <- read.delim(
