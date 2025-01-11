@@ -3,7 +3,7 @@
 # This script only calculates global ancestry from RFMix estimates, to be used as a 
 # covariate in LAAA fine mapping. RFMix results for ALL chromosomes must be generated
 # before this step is run. Can be run using RFMix results run with collapse flag -o
-# or -co, but assumes RFMix was run in batches.
+# or -co. Assumes RFMix was run in batches.
 
 # Scripts assume RFMix output file names are as output by RFMix:
     # chr#_local_ancestry.0.Viterbi.txt
