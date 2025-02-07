@@ -3,8 +3,8 @@
 #SBATCH --partition=amilan
 #SBATCH --ntasks=30
 #SBATCH --job-name="ph_conv"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/shapeit_format/job_run_hg38_phased_conversion.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/shapeit_format/job_run_hg38_phased_conversion.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_run_hg38_phased_conversion.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_run_hg38_phased_conversion.err"
 #SBATCH --account=amc-general
 #SBATCH --time=08:00:00
 
@@ -35,11 +35,18 @@ nr_threads="$SLURM_NTASKS"
 # batch="10"
 
 # Re-run WGS data
-out_dir="${data_dir}/shapeit_format"
-input_vcf='${data_dir}/input/chr${chr}_noinfo_maf0.03_snp_id_filt.vcf.gz'
-min_rsq=0
+# out_dir="${data_dir}/shapeit_format"
+# input_vcf='${data_dir}/input/chr${chr}_noinfo_maf0.03_snp_id_filt.vcf.gz'
+# min_rsq=0
+# build="hg38"
+# batch="5 8 10 17"
+
+# Test BARD chr11 and chr21
+out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input"
+input_vcf='${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/chr${chr}.dose_noinfo_maf0.03_snp_id_filt.vcf.gz'
+min_rsq=0.7
 build="hg38"
-batch="5 8 10 17"
+batch="11 21"
 
 for chr in $batch; do
 	input_vcf_chr=$(eval "echo $input_vcf")

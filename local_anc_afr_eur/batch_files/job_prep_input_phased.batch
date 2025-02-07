@@ -3,8 +3,8 @@
 #SBATCH --partition=amilan
 #SBATCH --ntasks=12
 #SBATCH --job-name="prep_wgs"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/input/job_prep_input_wgs.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_prep_input_wgs.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_prep_input_wgs.err"
 #SBATCH --account=amc-general
 #SBATCH --time=08:00:00
 #SBATCH --mem=40G
@@ -37,10 +37,17 @@ nr_threads="$SLURM_NTASKS"
 # batch="10"
 
 # Re-run WGS data
-out_dir="${data_dir}/input"
-samp_ids="${data_dir}/input/sample_ids.txt"
-input_vcf='${data_dir}/input/chr${chr}.vcf.gz'
-batch="5 10"
+# out_dir="${data_dir}/input"
+# samp_ids="${data_dir}/input/sample_ids.txt"
+# input_vcf='${data_dir}/input/chr${chr}.vcf.gz'
+# batch="5 10"
+
+# Test BARD chr11 and chr21
+    # input VCF already had R2 filter of 0.3
+out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input"
+samp_ids="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/sample_ids.txt"
+input_vcf='${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/chr${chr}.dose.vcf.gz'
+batch="11 21"
 
 for chr in $batch; do
     input_vcf_chr=$(eval "echo $input_vcf")

@@ -4,11 +4,11 @@
 #SBATCH --partition=amilan
 #SBATCH --ntasks=64
 #SBATCH --job-name="rfmix"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/wgs_output/job_run_rfmix_wgs.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/wgs_output/job_run_rfmix_wgs.err"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_run_rfmix_wgs_chr21.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_run_rfmix_wgs_chr21.err"
 #SBATCH --account=amc-general
 #SBATCH --mem=10G
-#SBATCH --time=4:00:00
+#SBATCH --time=18:00:00
 
 # TO NOTE: update the variables to set the data directory (data_dir), code
 # directory (code_dir), the output directory (out_dir), the SHAPEIT input
@@ -28,10 +28,10 @@ collapse_flag="-o"  # either -co to collapse (admix map) or -o to not (LAAA)
 # batch="22"
 
 # Test WGS
-out_dir="${data_dir}/pipeline_test_data/wgs_output"
-shapeit_dir="${data_dir}/pipeline_test_data/wgs_output"
-rfmix_input="${code_dir}/rfmix_input"
-batch="10"
+# out_dir="${data_dir}/pipeline_test_data/wgs_output"
+# shapeit_dir="${data_dir}/pipeline_test_data/wgs_output"
+# rfmix_input="${code_dir}/rfmix_input"
+# batch="10"
 
 # Test imputed
 # out_dir="${data_dir}/pipeline_test_data/imp_output"
@@ -44,6 +44,12 @@ batch="10"
 # shapeit_dir="${data_dir}/shapeit_format"
 # rfmix_input="${code_dir}/rfmix_input"
 # batch="17"
+
+# Test BARD chr11 and chr21
+out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/output"
+shapeit_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input"
+rfmix_input="${code_dir}/rfmix_input"
+batch="21"
 
 cd "$out_dir"  # so logs saved in output directory
 
