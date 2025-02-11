@@ -19,7 +19,7 @@
 
 data_dir="/scratch/alpine/sslack@xsede.org/ortega"
 code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
-nr_batch=50  # 50 based on previous examples
+nr_samples_in_batch=20  # 20 usually good, try 10 if RFMix crashes
 collapse_flag="-o"  # either -co to collapse (admix map) or -o to not (LAAA)
 
 # Test chip
@@ -67,7 +67,7 @@ for chr in $batch; do
                 "$shapeit_haps" \
                 "$shapeit_samples" \
                 "$rfmix_input" \
-                "$nr_batch" \
+                "$nr_samples_in_batch" \
                 "$collapse_flag" \
                 "$code_dir" \
                 "${out_dir}/chr${chr}"

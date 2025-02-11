@@ -4,7 +4,7 @@
 shapeit_haps_file=$1
 shapeit_samples_file=$2
 rfmix_input_dir=$3
-nr_batches=$4
+nr_samples_in_batch=$4  # 20 usually good, try 10 if RFMix crashes
 collapse_flag=$5  #either -co to collapse or -o to not collapse the RFmix output
 code_dir=$6
 out_dir=$7
@@ -71,7 +71,8 @@ cp tmp_chr${chr}_snps_keep.txt chr${chr}_local_ancestry_snps.txt
 cat $shapeit_samples_file | sed -e '1,2d' | cut -f1,2 -d' ' > chr${chr}_local_ancestry_samples.txt
 
 #Run RFMix
-if [ $nr_batches -eq 1 ]
+# If only one batch based on given number samples in batch
+if [ $nr_samples_in_batch -ge $nr_samples ]
 then
    RFMix_PopPhased -a chr${chr}_alleles.txt \
                    -p chr${chr}_classes.txt \
@@ -85,8 +86,9 @@ else
    let "begin_ref_pos=end_ref_pos-(total_nr_ref_samples*2)+1"
 
    #Process each batch seperately
-   let "nr_samples_in_batch=nr_samples/nr_batches"
+   let "nr_batches=(nr_samples/nr_samples_in_batch)+1"
    let "nr_haplos=nr_samples_in_batch*2"
+
    for ((b=1; b<=$nr_batches; b++))
    do
       echo "Processing batch $b"
