@@ -106,6 +106,7 @@ else
       cut -f$cut_str -d' ' chr${chr}_classes.txt > chr${chr}_classes_batch${b}.txt
       cut -c$cut_str chr${chr}_alleles.txt > chr${chr}_alleles_batch${b}.txt
       
+      # Note that the 1 after collapse_flag is part of the collapse_flag argument
       RFMix_PopPhased -a chr${chr}_alleles_batch${b}.txt \
                       -p chr${chr}_classes_batch${b}.txt \
                       -m chr${chr}_snp_locations.txt \
