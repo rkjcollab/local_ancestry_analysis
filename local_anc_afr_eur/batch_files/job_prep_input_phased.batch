@@ -18,10 +18,15 @@
 # chromosome VCF file name structure for that batch (input_vcf).
 
 # Set inputs
-data_dir="/scratch/alpine/sslack@xsede.org/ortega"
-code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
+# Alpine
+# data_dir="/scratch/alpine/sslack@xsede.org/ortega"
+# code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
+# nr_threads="$SLURM_NTASKS"
+# Local
+data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega/data"
+code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
 min_maf=0.03
-nr_threads="$SLURM_NTASKS"
+nr_threads=4
 
 # Test imputed data
 # out_dir="${data_dir}/data/pipeline_test_data/imp_output"
@@ -44,10 +49,17 @@ nr_threads="$SLURM_NTASKS"
 
 # Test BARD chr11 and chr21
     # input VCF already had R2 filter of 0.3
-out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input"
-samp_ids="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/sample_ids.txt"
-input_vcf='${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/chr${chr}.dose.vcf.gz'
-batch="11 21"
+# out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input"
+# samp_ids="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/sample_ids.txt"
+# input_vcf='${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/chr${chr}.dose.vcf.gz'
+# batch="11 21"
+
+# Test BARD chr17
+    # input VCF already had R2 filter of 0.3
+out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/imp_output"
+samp_ids="${data_dir}/pipeline_test_data/bard_from_abhishek/sampleID.txt"
+input_vcf='${data_dir}/pipeline_test_data/bard_from_abhishek/imp/chr${chr}.dose.vcf.gz'
+batch="17"
 
 for chr in $batch; do
     input_vcf_chr=$(eval "echo $input_vcf")
