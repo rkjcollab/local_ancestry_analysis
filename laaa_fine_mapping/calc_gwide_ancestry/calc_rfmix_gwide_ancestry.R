@@ -5,8 +5,12 @@ args <- commandArgs(trailingOnly = TRUE)
 # but should be found if run with -co. Code automatically looks for batch 1 SNPs
 # per window file, as it is the same for all batches.
 
-sample.list.file.name <- args[1]
-rfmix.dir <- args[2]
+# Get args
+rfmix.dir <- args[1]
+
+# Set other file names
+sample.list.file.name <- paste0(rfmix.dir, "/chr17/chr17_local_ancestry_samples.txt")
+  # TODO: switch this to chr1 and make note!
 out.file.name <- paste0(rfmix.dir, "/rfmix_gwide.txt")
 
 # Get values constant across all chromosomes
@@ -17,10 +21,11 @@ nr.haplos <- nr.indiv*2
 total.nr.snps <- 0
 total.nr.afr.snps <- as.matrix(rep(0, nr.haplos))
 
-for (chr in 1:22) {
+for (chr in c(17, 21)) {
   print(paste0("Processing chromosome ", chr, "."))
   anc <- read.table(paste0(
     rfmix.dir, "/chr", chr, "/chr", chr, "_local_ancestry.0.Viterbi.txt"))
+  
   # Get number of SNPs from SNP list
   nr.snps.check <- dim(read.delim(paste0(
     rfmix.dir, "/chr", chr, "/chr", chr, "_local_ancestry_snps.txt"),
