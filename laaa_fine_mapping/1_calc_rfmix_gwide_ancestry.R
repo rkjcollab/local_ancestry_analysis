@@ -9,8 +9,7 @@ args <- commandArgs(trailingOnly = TRUE)
 rfmix.dir <- args[1]
 
 # Set other file names
-sample.list.file.name <- paste0(rfmix.dir, "/chr17/chr17_local_ancestry_samples.txt")
-  # TODO: switch this to chr1 and make note!
+sample.list.file.name <- paste0(rfmix.dir, "/chr1/chr1_local_ancestry_samples.txt")
 out.file.name <- paste0(rfmix.dir, "/rfmix_gwide.txt")
 
 # Get values constant across all chromosomes
@@ -21,7 +20,7 @@ nr.haplos <- nr.indiv*2
 total.nr.snps <- 0
 total.nr.afr.snps <- as.matrix(rep(0, nr.haplos))
 
-for (chr in c(17, 21)) {
+for (chr in 1:22) {
   print(paste0("Processing chromosome ", chr, "."))
   anc <- read.table(paste0(
     rfmix.dir, "/chr", chr, "/chr", chr, "_local_ancestry.0.Viterbi.txt"))
