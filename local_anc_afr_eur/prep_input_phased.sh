@@ -21,6 +21,7 @@ samp_ids=$5
 vcf_output=`basename $vcf_input | sed 's/.vcf.gz//'`
 
 # Remove ID, INFO, FORMAT fields from VCF file
+     # including format removes all tags except for GT
 bcftools  annotate -x ID,^INFO/R2,INFO/MAF,FORMAT \
      "$vcf_input" -Oz -o "${out_dir}/tmp_${vcf_output}_noinfo.vcf.gz" \
      --threads $nr_threads
