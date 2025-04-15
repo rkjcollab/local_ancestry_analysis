@@ -155,4 +155,4 @@ do
 done
 
 # Clean up
-# rm ${out_dir}/tmp_*
+rm ${out_dir}/tmp_*
