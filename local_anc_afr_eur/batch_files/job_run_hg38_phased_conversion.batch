@@ -8,7 +8,7 @@
 #SBATCH --account=amc-general
 #SBATCH --time=02:00:00
 #SBATCH --mem=25G
-#SBATCH --array=5,8,10,17
+#SBATCH --array=5,10
 
 # TO NOTE: update the variables to set the data directory (data_dir), the output
 # directory (out_dir), code directory (code_dir), the minimum imputation Rsq to
@@ -35,7 +35,7 @@ code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr
 nr_threads=$SLURM_NTASKS
 data_dir="/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input"
 out_dir='${data_dir}/chr${chr}'
-input_vcf='${data_dir}/chr${chr}_small_noinfo_filt_tags_maf0.03_snp_id.vcf.gz'
+input_vcf='${data_dir}/chr${chr}/chr${chr}_noinfo_filt_tags_maf0.03_snp_id.vcf.gz'
 min_rsq=0
 build="hg38"
 batch=$SLURM_ARRAY_TASK_ID
