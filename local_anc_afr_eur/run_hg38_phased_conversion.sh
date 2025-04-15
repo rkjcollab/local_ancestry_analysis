@@ -50,7 +50,7 @@ fi
 if [ -s "${out_dir}/tmp_${vcf_prefix}_r2_failed_variants.txt" ]
 then
     rsq_vcf_file=${out_dir}/tmp_${vcf_prefix}_rsq_filt.vcf.gz
-   bcftools view -e "ID=@${out_dir}/tmp_${vcf_prefix}_r2_failed_variants.txt" \
+    bcftools view -e "ID=@${out_dir}/tmp_${vcf_prefix}_r2_failed_variants.txt" \
       $vcf_input -Oz -o $rsq_vcf_file
       # needs to be double ""
 else
@@ -155,4 +155,4 @@ do
 done
 
 # Clean up
-rm ${out_dir}/tmp_*
+# rm ${out_dir}/tmp_*

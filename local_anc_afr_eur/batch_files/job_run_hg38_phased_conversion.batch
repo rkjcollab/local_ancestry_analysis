@@ -1,12 +1,14 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --partition=amilan
-#SBATCH --ntasks=30
-#SBATCH --job-name="ph_conv"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_run_hg38_phased_conversion.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_run_hg38_phased_conversion.err"
+#SBATCH --ntasks=24
+#SBATCH --job-name="run_hg38_phased_conversion"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input/job_%x_chr%a.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input/job_%x_chr%a.err"
 #SBATCH --account=amc-general
-#SBATCH --time=08:00:00
+#SBATCH --time=02:00:00
+#SBATCH --mem=25G
+#SBATCH --array=5,8,10,17
 
 # TO NOTE: update the variables to set the data directory (data_dir), the output
 # directory (out_dir), code directory (code_dir), the minimum imputation Rsq to
@@ -15,50 +17,28 @@
 # hg19), the list of chromosomes want to run (batch) for the given single-
 # chromosome VCF file name structure for that batch (input_vcf).
 
-# Alpine
-# data_dir="/scratch/alpine/sslack@xsede.org/ortega"
-# code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
-# nr_threads="$SLURM_NTASKS"
-# Local
-data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega/data"
-code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
-nr_threads=4
+# Set inputs
 
 # Test imputed data
-# out_dir="${data_dir}/data/pipeline_test_data/imp_output"
-# input_vcf='${data_dir}/data/pipeline_test_data/imp_output/chr${chr}_small.vcf_noinfo_maf0.03_snp_id_filt.vcf.gz'
-#     # single quotes are required here for substitution of $chr below
-# min_rsq=0.7  # if procesing WGS, set to 0
-# build="hg38"  # build of the input data, either hg38 or hg19
+# RKJCOLLAB="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver"
+# code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
+# nr_threads=8
+# data_dir="${RKJCOLLAB}/Collabs/ortega/data/pipeline_test_data/local_anc_afr_eur"
+# out_dir="${data_dir}/imp_output"
+# input_vcf='${data_dir}/imp_output/chr${chr}_small_noinfo_filt_tags_maf0.03_snp_id.vcf.gz'
+# min_rsq=0.7
+# build="hg38"
 # batch="22"
 
-# Test WGS data
-# out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
-# input_vcf='${data_dir}/data/pipeline_test_data/wgs_output/chr${chr}_small.vcf_noinfo_maf0.03_snp_id_filt.vcf.gz'
-# min_rsq=0  # if procesing WGS, set to 0
-# build="hg38"  # build of the input data, either hg38 or hg19
-# batch="10"
-
-# Re-run WGS data
-# out_dir="${data_dir}/shapeit_format"
-# input_vcf='${data_dir}/input/chr${chr}_noinfo_maf0.03_snp_id_filt.vcf.gz'
-# min_rsq=0
-# build="hg38"
-# batch="5 8 10 17"
-
-# Test BARD chr11 and chr21
-out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input"
-input_vcf='${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/chr${chr}.dose_noinfo_maf0.03_snp_id_filt.vcf.gz'
-min_rsq=0.7
+# Re-run SARP WGS data
+code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
+nr_threads=$SLURM_NTASKS
+data_dir="/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input"
+out_dir="${data_dir}"
+input_vcf='${data_dir}/chr${chr}_small_noinfo_filt_tags_maf0.03_snp_id.vcf.gz'
+min_rsq=0
 build="hg38"
-batch="11 21"
-
-# Test BARD chr17
-out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/imp_output"
-input_vcf='${data_dir}/pipeline_test_data/bard_from_abhishek/imp_output/chr${chr}.dose_noinfo_maf0.03_snp_id_filt.vcf.gz'
-min_rsq=0.7
-build="hg38"
-batch="17"
+batch=$SLURM_ARRAY_TASK_ID
 
 for chr in $batch; do
 	input_vcf_chr=$(eval "echo $input_vcf")
@@ -68,10 +48,10 @@ for chr in $batch; do
 	apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
     	${cont_dir}/local_ancestry_analysis.sif \
 		bash ${code_dir}/run_hg38_phased_conversion.sh \
-		"$input_vcf_chr" \
-		"$out_dir" \
-		"$nr_threads" \
-		"$code_dir" \
-		"$min_rsq" \
-		"$build"
+			"$input_vcf_chr" \
+			"$out_dir" \
+			"$nr_threads" \
+			"$code_dir" \
+			"$min_rsq" \
+			"$build"
 done
