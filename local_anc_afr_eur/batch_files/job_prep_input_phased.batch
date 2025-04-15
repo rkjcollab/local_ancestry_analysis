@@ -1,13 +1,14 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --partition=amilan
-#SBATCH --ntasks=12
-#SBATCH --job-name="prep_wgs"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_prep_input_wgs.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/job_prep_input_wgs.err"
+#SBATCH --ntasks=24
+#SBATCH --job-name="prep_input_phased"
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input/job_%x_chr%a.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input/job_%x_chr%a.err"
 #SBATCH --account=amc-general
-#SBATCH --time=08:00:00
+#SBATCH --time=03:00:00
 #SBATCH --mem=40G
+#SBATCH --array=5,8,10,17
 
 # TO NOTE: depending on where running may have additional steps so apptainer
 # ready to run shell below.
@@ -18,48 +19,26 @@
 # chromosome VCF file name structure for that batch (input_vcf).
 
 # Set inputs
-# Alpine
-# data_dir="/scratch/alpine/sslack@xsede.org/ortega"
-# code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
-# nr_threads="$SLURM_NTASKS"
-# Local
-data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega/data"
-code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
-min_maf=0.03
-nr_threads=4
 
 # Test imputed data
-# out_dir="${data_dir}/data/pipeline_test_data/imp_output"
-# samp_ids="${data_dir}/data/pipeline_test_data/imp/sample_list.txt"
-# input_vcf='${data_dir}/data/pipeline_test_data/imp/chr${chr}_small.vcf'
-#     # single quotes are required here for substitution of $chr below
-# batch="22"
+# code_dir="/Users/slacksa/repos/local_ancestry_analysis/local_anc_afr_eur"
+# nr_threads=8
+# min_maf=0.03
+# data_dir="${RKJCOLLAB}/Collabs/ortega/data/pipeline_test_data/local_anc_afr_eur"
+# out_dir="${data_dir}/imp_output"
+# samp_ids="${data_dir}/imp/chr22_small_sample_list_subset.txt"
+# input_vcf='${data_dir}/imp/chr${chr}_small.vcf'
+# batch=22
 
-# Test WGS data
-# out_dir="${data_dir}/data/pipeline_test_data/wgs_output"
-# samp_ids="${data_dir}/data/pipeline_test_data/wgs/sample_list.txt"
-# input_vcf='${data_dir}/data/pipeline_test_data/wgs/chr${chr}_small.vcf'
-# batch="10"
-
-# Re-run WGS data
-# out_dir="${data_dir}/input"
-# samp_ids="${data_dir}/input/sample_ids.txt"
-# input_vcf='${data_dir}/input/chr${chr}.vcf.gz'
-# batch="5 10"
-
-# Test BARD chr11 and chr21
-    # input VCF already had R2 filter of 0.3
-# out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input"
-# samp_ids="${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/sample_ids.txt"
-# input_vcf='${data_dir}/pipeline_test_data/bard_from_abhishek/rfmix/input/chr${chr}.dose.vcf.gz'
-# batch="11 21"
-
-# Test BARD chr17
-    # input VCF already had R2 filter of 0.3
-out_dir="${data_dir}/pipeline_test_data/bard_from_abhishek/imp_output"
-samp_ids="${data_dir}/pipeline_test_data/bard_from_abhishek/sampleID.txt"
-input_vcf='${data_dir}/pipeline_test_data/bard_from_abhishek/imp/chr${chr}.dose.vcf.gz'
-batch="17"
+# Re-run SARP WGS data
+code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis"
+min_maf=0.03
+nr_threads=$SLURM_NTASKS
+data_dir="/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input"
+out_dir="${data_dir}"
+input_vcf='${data_dir}/chr${chr}.vcf.gz'
+samp_ids="${data_dir}/sample_ids_for_laaa.txt"
+batch=$SLURM_ARRAY_TASK_ID
 
 for chr in $batch; do
     input_vcf_chr=$(eval "echo $input_vcf")
@@ -69,9 +48,9 @@ for chr in $batch; do
     apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
         ${cont_dir}/local_ancestry_analysis.sif \
         bash ${code_dir}/prep_input_phased.sh \
-        "$input_vcf_chr" \
-        "$out_dir" \
-        "$min_maf" \
-        "$nr_threads" \
-        "$samp_ids"
+            "$input_vcf_chr" \
+            "$out_dir" \
+            "$min_maf" \
+            "$nr_threads" \
+            "$samp_ids"
 done
