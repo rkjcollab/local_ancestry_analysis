@@ -31,7 +31,7 @@
 # batch=22
 
 # Re-run SARP WGS data
-code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis"
+code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
 min_maf=0.03
 nr_threads=$SLURM_NTASKS
 data_dir="/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input"
