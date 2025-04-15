@@ -34,7 +34,7 @@
 code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/local_anc_afr_eur"
 nr_threads=$SLURM_NTASKS
 data_dir="/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input"
-out_dir="${data_dir}"
+out_dir='${data_dir}/chr${chr}'
 input_vcf='${data_dir}/chr${chr}_small_noinfo_filt_tags_maf0.03_snp_id.vcf.gz'
 min_rsq=0
 build="hg38"
@@ -42,14 +42,15 @@ batch=$SLURM_ARRAY_TASK_ID
 
 for chr in $batch; do
 	input_vcf_chr=$(eval "echo $input_vcf")
-
+    out_dir_chr=$(eval "echo $out_dir")
+    mkdir "$out_dir_chr"
 	cont_dir=$(dirname "${code_dir}")
 
 	apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
     	${cont_dir}/local_ancestry_analysis.sif \
 		bash ${code_dir}/run_hg38_phased_conversion.sh \
 			"$input_vcf_chr" \
-			"$out_dir" \
+			"$out_dir_chr" \
 			"$nr_threads" \
 			"$code_dir" \
 			"$min_rsq" \
