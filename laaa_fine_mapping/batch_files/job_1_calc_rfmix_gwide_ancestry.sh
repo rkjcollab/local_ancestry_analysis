@@ -1,13 +1,4 @@
 #!/bin/bash
-#SBATCH --nodes=1
-#SBATCH --partition=amilan
-#SBATCH --ntasks=10
-#SBATCH --job-name="calc_rfmix_gwide_anestry"
-#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/imp_output_o/job_%x.out"
-#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix/imp_output_o/job_%x.err"
-#SBATCH --account=amc-general
-#SBATCH --time=00:30:00
-#SBATCH --mem=40G
 
 # TO NOTE: First, set the paths to the data directory and the code directory, which
 # will be bound to the container. Then update the input_file_name path to the same
@@ -19,15 +10,10 @@
 # Finally, set the path to RFMix results split by chromosome (rfmix_results dir).
 # TO NOTE: this script needs to be called from laaa_fine_mapping, not batch_files.
 
-# Test imputed BARD
-data_dir="/scratch/alpine/sslack@xsede.org/ortega/pipeline_test_data/bard_from_abhishek/rfmix"
-code_dir="/projects/sslack@xsede.org/repos/local_ancestry_analysis/laaa_fine_mapping"
-rfmix_results_dir="${data_dir}/imp_output_o"
-
-# Test WGS SARP/CSGA
-# data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega/data/rfmix_wgs"
-# code_dir="/Users/slacksa/repos/local_ancestry_analysis/laaa_fine_mapping"
-# rfmix_results_dir="${data_dir}/output_o"
+# Re-run WGS SARP/CSGA
+data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega/data/rfmix_wgs"
+code_dir="/Users/slacksa/repos/local_ancestry_analysis/laaa_fine_mapping"
+rfmix_results_dir="${data_dir}/output_o"
 
 # Run script
 cont_dir=$(dirname "${code_dir}")

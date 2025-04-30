@@ -15,15 +15,15 @@
 # Script outputs dose frames in hg19 and hg38, and LAAA is run in hg38.
 
 # Set inputs for making dose frames
-data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega/data/pipeline_test_data"
+data_dir="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver/Collabs/ortega/data"
 code_dir="/Users/slacksa/repos/local_ancestry_analysis/laaa_fine_mapping"
-out_dir_prefix="${data_dir}/laaa_fine_mapping/laaa_wgs"
+out_dir_prefix="${data_dir}/laaa_wgs"
     # Script makes sub-directories "dose_frames" and "output" under out_dir_prefix
-rfmix_results_dir="${data_dir}/local_anc_afr_eur/wgs_output"
-admix_dir="${data_dir}/laaa_fine_mapping/pheno_analysis/output"
+rfmix_results_dir="${data_dir}/rfmix_wgs/output_o"
+admix_dir="${data_dir}/pheno_analysis/output"
 
 # Set inputs for running LAAA model
-pheno_file='laaa_fine_mapping/laaa_wgs/pheno/SARP123_CSGA_348_laaa_${pheno}_pheno.txt'
+pheno_file='pheno/SARP123_CSGA_348_laaa_${pheno}_pheno.txt'
     # single quotes are required here for substitution of and $pheno below
     # pheno string in name must match column name with phenotype values
 pheno_id_col_name="TopMed_ID"  # should match format in RFMix output
