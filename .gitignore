@@ -1,4 +1,4 @@
-s# History files
+# History files
 .Rhistory
 .Rapp.history
 
@@ -64,3 +64,8 @@ rfmix_input/
 *.jpg
 *.jpeg
 
+# Env files
+*.sif
+
+# Snakemake files
+**/.snakemake/
