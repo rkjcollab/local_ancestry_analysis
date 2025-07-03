@@ -9,11 +9,12 @@ rfmix_results_dir="$2"
 admix_dir="$3"
 
 # Loop over peak admixture mapping regions and make dose frames for each
-admix_file_list=$(ls $admix_dir | grep -E "region_chr[0-9]+\.txt")
+admix_file_list=$(ls $admix_dir | grep -E "region_chr[0-9]+(_male|_female)?\.txt")
+
 for admix_file in $admix_file_list; do
     echo "Making dose frames for region file ${admix_file}."
 
-    [[ $admix_file =~ (.*)_admixture_peak_contig_region_chr(.*)\.txt ]];
+    [[ $admix_file =~ (.*)_admixture_peak_contig_region_chr([^_]+)(_male|_female)?.txt ]];
     pheno=${BASH_REMATCH[1]}
     chr=${BASH_REMATCH[2]}
 
@@ -25,6 +26,8 @@ for admix_file in $admix_file_list; do
     mkdir "$out_dir_prefix"
     out_dir="${out_dir_prefix}/region_hg19_${pheno}_chr${chr}"
 
-    bash make_dose_frames/create_dose_frames.sh \
-        $chr $start $end $pheno "${rfmix_results_dir}/chr${chr}" $out_dir
+    if [ ! -d "$out_dir" ]; then
+        bash make_dose_frames/create_dose_frames.sh \
+            $chr $start $end $pheno "${rfmix_results_dir}/chr${chr}" $out_dir
+    fi
 done

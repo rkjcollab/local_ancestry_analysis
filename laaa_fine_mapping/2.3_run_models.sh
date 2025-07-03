@@ -26,6 +26,8 @@ for dose in $dose_dir_list; do
     out_dir="${out_dir_prefix}/${dose}"
     mkdir $out_dir
 
+    echo $chr
+
     Rscript run_models/run_models.R \
         $pheno $chr ${dose_dir}/${dose} $out_dir $pheno_file_pheno $pheno_id_col_name $cov_list
 

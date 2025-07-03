@@ -1,5 +1,5 @@
 ---
-title: "3_laaa_results"
+title: "3.1_laaa_results"
 author: "SDS"
 date: "Last compiled on `r Sys.Date()`"
 output: 
@@ -115,6 +115,16 @@ nom_sig_thresh <- 0.01
 
 ```
 
+```{r, message=F}
+# Get plotting coordinates to include combined & sex-stratified analyses
+df_chr8_strat <- read_delim(
+  "data/laaa_wgs/strat_by_sex/dose_frames/region_hg38_maxFVC_chr8/maxFVC_chr_8_afr_dose.txt")
+
+reg_chr8_min <- min(df_chr8$position, df_chr8_strat$position)
+reg_chr8_max <- max(df_chr8$position, df_chr8_strat$position)
+y_max <- 1e-7
+```
+
 **Regions Tested:**
 
 + MaxFVC chr5:`r format(min(win_chr5$position), scientific = F)` - `r format(max(win_chr5$position), scientific = F)`
@@ -142,7 +152,7 @@ get_sig <- function(df, thresh, pval) {
 }
 
 # Make plotting function - all p-values in one plot
-plot_sig <- function(win_df) {
+plot_sig <- function(win_df, min_pos = NULL, max_pos = NULL, y_max = 1e-7) {
 
   win_df_lg <- win_df %>%
     dplyr::select(position, allele_dose_p, afr_dose_p, allele_afr_dose_p, anova_p) %>%
@@ -153,13 +163,26 @@ plot_sig <- function(win_df) {
   win_df_sig <- subset(win_df_lg, pval < sig_thresh & type == "anova_p")
   win_df_nom_sig <- subset(win_df_lg, pval < nom_sig_thresh & type == "anova_p")
   
-  ggplot(win_df_lg, aes(position, -log10(pval))) +
-    geom_point() +
-    geom_point(data = subset(win_df_lg, position %in% win_df_sig$position),
-               aes(color = "orange")) +
-    labs(x = "Position", y = "-log10(P-Value)", color = paste0("Anova P < ", sig_thresh)) +
-    facet_wrap(~ type) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  if (!is.null(min_pos) & !is.null(max_pos)) {
+    ggplot(win_df_lg, aes(position, -log10(pval))) +
+      geom_point() +
+      geom_point(data = subset(win_df_lg, position %in% win_df_sig$position),
+                 aes(color = "orange")) +
+      labs(x = "Position", y = "-log10(P-Value)", color = paste0("Anova P < ", sig_thresh)) +
+      facet_wrap(~ type) +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      scale_x_continuous(limits = c(min_pos, max_pos)) +
+      scale_y_continuous(limits = c(NA, -log10(y_max)))
+  } else {
+    ggplot(win_df_lg, aes(position, -log10(pval))) +
+      geom_point() +
+      geom_point(data = subset(win_df_lg, position %in% win_df_sig$position),
+                 aes(color = "orange")) +
+      labs(x = "Position", y = "-log10(P-Value)", color = paste0("Anova P < ", sig_thresh)) +
+      facet_wrap(~ type) +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      scale_y_continuous(limits = c(NA, -log10(y_max)))
+  }
 }
 
 # Plot split phenotype
@@ -359,7 +382,7 @@ win_chr5_int_sig %>%
 ### **All Model P-Values**
 
 ```{r}
-plot_sig(win_chr8)
+plot_sig(win_chr8, reg_chr8_min, reg_chr8_max)
 ```
 
 Based on this, think makes sense to only look at allele dose results and

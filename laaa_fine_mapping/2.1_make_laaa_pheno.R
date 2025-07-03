@@ -4,6 +4,9 @@
 # file updated by Dr. Ortgea:
 # Complete_SARP_CSGA_3-4-21_AA_cases_12yr_and_older_cleaned_5-9-2024.xlsx).
 
+# Updated 20250702 to run LAAA stratified by sex on admixture mapping results
+# stratified by sex.
+
 # Phenotypes:
 
 # “ALL MaxFVC”
@@ -16,9 +19,6 @@
 # study group (SARP12+CSGA vs. SARP3)
 # BMI
 # RFMix_GW_AFR, calculated from RFMix run on unimputed data
-  # TO NOTE: Abhishek, I used the estimate from RFMix run on unimputed data since
-  # I had it available, but you will instead used the estimate from RFMix run on 
-  # the imputed data calculated in step 1.1. 
 
 # Setup ------------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ anc_unimp <- read_delim("data/gwide_anc_unimp/merged_gwide.txt")
 
 # List of IDs from RFMix (WGS) to filter files to
 id_list_to_filt <- read_delim(
-  "data/rfmix_wgs_new/output_o/chr8/chr8_local_ancestry_samples.txt",
+  "data/rfmix_wgs/output_o/chr8/chr8_local_ancestry_samples.txt",
   col_names = c("fid", "iid"), delim = " ")
 
 # Make pheno -------------------------------------------------------------------
@@ -131,6 +131,7 @@ n_distinct(pheno_anc_unimp_mod_recode_filt_2$IID)  # 351 / 351
 
 # Make pheno files -------------------------------------------------------------
 
+# For combined analysis
 for (pheno in names(pheno_list)) {
   df <- pheno_anc_unimp_mod_recode_filt_2 %>%
     dplyr::select(FID, IID, TopMed_ID, !!pheno, all_of(names(cov_list))) %>%
@@ -138,5 +139,28 @@ for (pheno in names(pheno_list)) {
   write_tsv(df, paste0(
     "data/pheno/SARP123_CSGA_",
     nrow(df), "_laaa_", pheno, "_pheno.txt"
+  ))
+}
+
+# For sex-stratified analysis
+cov_list <- grep("ALL SEX", cov_list, value = T, invert = T)
+for (pheno in names(pheno_list)) {
+  df <- pheno_anc_unimp_mod_recode_filt_2 %>%
+    dplyr::filter(sex == 1) %>%
+    dplyr::select(FID, IID, TopMed_ID, !!pheno, all_of(names(cov_list))) %>%
+    dplyr::filter(!is.na(!!sym(pheno)))
+  write_tsv(df, paste0(
+    "data/pheno/strat_by_sex/SARP123_CSGA_",
+    nrow(df), "_laaa_", pheno, "_pheno_male.txt"
+  ))
+}
+for (pheno in names(pheno_list)) {
+  df <- pheno_anc_unimp_mod_recode_filt_2 %>%
+    dplyr::filter(sex == 2) %>%
+    dplyr::select(FID, IID, TopMed_ID, !!pheno, all_of(names(cov_list))) %>%
+    dplyr::filter(!is.na(!!sym(pheno)))
+  write_tsv(df, paste0(
+    "data/pheno/strat_by_sex/SARP123_CSGA_",
+    nrow(df), "_laaa_", pheno, "_pheno_female.txt"
   ))
 }
