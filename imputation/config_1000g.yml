@@ -9,4 +9,7 @@ chr: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]  # list of chrom
 orig_build: "hg19"  #  either "hg19" or "hg38"
 to_build: "hg19"  # either "hg19" or "hg38"
 imp:  "mich_1kg_p3_v5"  # should be 'topmed', 'mich_hla_v1', 'mich_hla_v2', 'mich_1kg_p3_v5',  'mich_hrc'
+imp_rsq_filt: "0"  # should be 0, 0.001, 0.1, 0.2, 0.3
 imp_name: "sarp_csga_1000g"  # job name for imputation server
+zip_pw: ""  # add from email when imputed job finishes
+opt: "gt"  # option for "gt" only or "all" dosage information (much slower)
