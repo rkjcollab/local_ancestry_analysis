@@ -7,9 +7,10 @@
 #SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/output_o/job_%x_chr%a.out"
 #SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/output_o/job_%x_chr%a.err"
 #SBATCH --account=amc-general
-#SBATCH --time=3:00:00
+#SBATCH --time=10:00:00
 #SBATCH --mem=10G
-#SBATCH --array=5,10
+#SBATCH --array=1,2,3,6
+#SBATCH --qos=normal
 
 # TO NOTE: update the variables to set the data directory (data_dir), code
 # directory (code_dir), the output directory (out_dir), the SHAPEIT input

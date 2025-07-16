@@ -1,14 +1,15 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --partition=amilan
-#SBATCH --ntasks=24
+#SBATCH --ntasks=8
 #SBATCH --job-name="run_hg38_phased_conversion"
 #SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input/job_%x_chr%a.out"
 #SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/rfmix_wgs/input/job_%x_chr%a.err"
 #SBATCH --account=amc-general
-#SBATCH --time=02:00:00
-#SBATCH --mem=25G
-#SBATCH --array=5,10
+#SBATCH --time=00:30:00
+#SBATCH --mem=5G
+#SBATCH --array=1,2,3,6,16
+#SBATCH --qos=normal
 
 # TO NOTE: update the variables to set the data directory (data_dir), the output
 # directory (out_dir), code directory (code_dir), the minimum imputation Rsq to
