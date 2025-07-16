@@ -1,5 +1,15 @@
-
 #!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --partition=amilan
+#SBATCH --ntasks=22
+#SBATCH --job-name="hrc_imp"  # used as part of output name
+#SBATCH -o "/scratch/alpine/sslack@xsede.org/ortega/imputation/%x/imputed/job_snakemake.out"
+#SBATCH -e "/scratch/alpine/sslack@xsede.org/ortega/imputation/%x/imputed/job_snakemake.err"
+#SBATCH --account=amc-general
+#SBATCH --time=02:00:00
+#SBATCH --mem=60G  # should be size of largest N zip files processing at same time
+#SBATCH --qos=normal
 
 # This is currently called inside of the limactl amd64.
 # Set paths and options in config.yml file. Paths are automatically 
@@ -10,48 +20,29 @@
 # Uncomment step want to run through
 # step="submit_initial_input"  # pre-imp QC
 # step="submit_fix_strands"  # submit imp
-# step="unzip_results"  # unzip imp results
-step="filter_info_and_vcf_files"
+step="concat_convert_to_plink"  # unzip, clean, & merge
 
-# Set RKJCOLLAB since not present in lima
-RKJCOLLAB="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver"
+# Set number cores or get from SLURM
+n_cores="$SLURM_NTASKS"
 
-# TOPMed
-# TO NOTE: output_data path may switch if download imputation results off of OneDrive
-echo "TOPMed"
+# Set base dirs
+# Uncomment if local
+# RKJCOLLAB="/Users/slacksa/Library/CloudStorage/OneDrive-TheUniversityofColoradoDenver"
+# base_data="${RKJCOLLAB}/Collabs/ortega"
+# base_code="/Users/slacksa/repos"
+
+# Uncomment if Alpine
+base_data="/scratch/alpine/sslack@xsede.org/ortega/imputation"
+base_code="/projects/sslack@xsede.org/repos"
+
+# Run snakemake
+# --bind ${base_data}/background/from_dayam_server/Victor_Ortega_analyses_MPB/SARP_CSGA_merge:/input_data \
 apptainer exec \
     --writable-tmpfs \
-    --bind /Users/slacksa/repos/imputation_snakemake:/repo \
-    --bind /Users/slacksa/repos/local_ancestry_analysis/imputation:/proj_repo \
-    --bind ${RKJCOLLAB}/Collabs/ortega/background/from_dayam_server/Victor_Ortega_analyses_MPB/SARP_CSGA_merge:/input_data \
-    --bind /Users/slacksa/temp_data/ortega/tm_r3_imp:/output_data \
-    /Users/slacksa/repos/imputation_snakemake/envs/topmed_imputation.sif \
-    snakemake --rerun-triggers mtime --snakefile /repo/Snakefile \
-        --configfile /proj_repo/config_topmed.yml \
-        --cores 8 --until "$step"
-
-# 1000G phase 3 v5
-# echo "1000G"
-# apptainer exec \
-#     --writable-tmpfs \
-#     --bind /Users/slacksa/repos/imputation_snakemake:/repo \
-#     --bind /Users/slacksa/repos/local_ancestry_analysis/imputation:/proj_repo \
-#     --bind ${RKJCOLLAB}/Collabs/ortega/background/from_dayam_server/Victor_Ortega_analyses_MPB/SARP_CSGA_merge:/input_data \
-#     --bind ${RKJCOLLAB}/Collabs/ortega/data/genetics/1000g_imp:/output_data \
-#     /Users/slacksa/repos/imputation_snakemake/envs/topmed_imputation.sif \
-#     snakemake --rerun-triggers mtime --snakefile /repo/Snakefile \
-#         --configfile /proj_repo/config_1000g.yml \
-#         --cores 8 --until "$step"
-
-# HRC r1.1
-# echo "HRC"
-# apptainer exec \
-#     --writable-tmpfs \
-#     --bind /Users/slacksa/repos/imputation_snakemake:/repo \
-#     --bind /Users/slacksa/repos/local_ancestry_analysis/imputation:/proj_repo \
-#     --bind ${RKJCOLLAB}/Collabs/ortega/background/from_dayam_server/Victor_Ortega_analyses_MPB/SARP_CSGA_merge:/input_data \
-#     --bind ${RKJCOLLAB}/Collabs/ortega/data/genetics/hrc_imp:/output_data \
-#     /Users/slacksa/repos/imputation_snakemake/envs/topmed_imputation.sif \
-#     snakemake --rerun-triggers mtime --snakefile /repo/Snakefile \
-#         --configfile /proj_repo/config_hrc.yml \
-#         --cores 8 --until "$step"
+    --bind ${base_code}/imputation_snakemake:/repo \
+    --bind ${base_code}/local_ancestry_analysis/imputation:/proj_repo \
+    --bind ${base_data}/${SLURM_JOB_NAME}:/output_data \
+    ${base_code}/imputation_snakemake/envs/topmed_imputation.sif \
+    snakemake --snakefile /repo/Snakefile \
+        --configfile /proj_repo/config_${SLURM_JOB_NAME}.yml \
+        --cores "$n_cores" --until "$step"

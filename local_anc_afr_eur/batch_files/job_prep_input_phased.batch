@@ -8,7 +8,8 @@
 #SBATCH --account=amc-general
 #SBATCH --time=03:00:00
 #SBATCH --mem=40G
-#SBATCH --array=5,8,10,17
+#SBATCH --array=1,2,3,6,16
+#SBATCH --qos=normal
 
 # TO NOTE: depending on where running may have additional steps so apptainer
 # ready to run shell below.
