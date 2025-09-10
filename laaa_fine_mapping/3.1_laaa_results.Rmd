@@ -113,17 +113,59 @@ source("/Users/slacksa/repos/local_ancestry_analysis/laaa_fine_mapping/set_main_
 sig_thresh <- 0.001
 nom_sig_thresh <- 0.01
 
+# Phenotype with percent-predicted phenotypes calculated
+pheno <- read_csv(
+  "data/pheno/Complete_SARP_CSGA_3-4-21_AA_cases_12yr_and_older_cleaned_04-11-25_with_pp.csv")
+
 ```
+
+Get plotting coordinates and genome annotation:
 
 ```{r, message=F}
 # Get plotting coordinates to include combined & sex-stratified analyses
 df_chr8_strat <- read_delim(
   "data/laaa_wgs/strat_by_sex/dose_frames/region_hg38_maxFVC_chr8/maxFVC_chr_8_afr_dose.txt")
 
-reg_chr8_min <- min(df_chr8$position, df_chr8_strat$position)
-reg_chr8_max <- max(df_chr8$position, df_chr8_strat$position)
+# reg_chr8_min <- min(df_chr8$position, df_chr8_strat$position)
+# reg_chr8_max <- max(df_chr8$position, df_chr8_strat$position)
+reg_chr8_min <- min(df_chr8$position)
+reg_chr8_max <- max(df_chr8$position)
 y_max <- 1e-7
+
+# Get genome annotation
+ah <- AnnotationHub()
+# query(ah, c("EnsDb", "Homo sapiens"))
+ensDb_v111 <- ah[["AH116291"]]
 ```
+
+Get range of each term p-values:
+
+```{r}
+# Get range of each term p-values to compare with combined analysis
+# Using chr8 maxFVC peak for this
+p_cols <- c("allele_dose_p", "afr_dose_p", "allele_afr_dose_p", "anova_p")
+maxFVC_chr8_max <- win_chr8 %>%
+  dplyr::summarize(across(all_of(p_cols),
+      list(min = ~min(.x, na.rm = TRUE), max = ~max(.x, na.rm = TRUE))))
+
+maxFVC_chr8_max
+write_tsv(maxFVC_chr8_max, "data/laaa_wgs/output/min_max_pvals_maxFVC_chr8.txt")
+
+```
+
+
+Merge percent predicted phenotypes into LAAA phenotype files:
+
+*TODO: pausing here for now - think if we visualize pp values we need to run*
+*the analysis with them.*
+
+```{r}
+pheno_mfvc <- inner_join(
+  pheno_mfvc,
+  pheno %>% dplyr::select(TopMed_ID, maxFVC_pp) %>% dplyr::filter(!duplicated(.)),
+  by = c("TopMed_ID"))
+```
+
 
 **Regions Tested:**
 
@@ -271,14 +313,13 @@ plot_split <- function(
 }
 
 # Get LD
-# peak_snp <- win_chr5_a_sig_peaks$position[1]
-# win_sig <- win_chr5_a_sig
-# dose_frame <- df_chr5
+# peak_snp <- win_chr10_a_sig_peaks$position[1]
+# dose_frame <- df_chr10
 # pval <- "allele_dose_p"
-calc_peak_ld <- function(peak_snp, win_sig, dose_frame, pval) {
+calc_peak_ld <- function(peak_snp, dose_frame, pval) {
   # Get peak snp
-  peak <- paste0(
-    win_sig$position[which.min(win_sig[[pval]])], "_allele")
+  # peak <- paste0(
+  #   win_sig$position[which.min(win_sig[[pval]])], "_allele")
   
   # Modify dose frame, use to create SnpMatrix
   df_allele_t <- as.data.frame(t(dose_frame %>%
@@ -300,13 +341,9 @@ calc_peak_ld <- function(peak_snp, win_sig, dose_frame, pval) {
 }
 
 # Plot locus zoom
-# win_ld <- win_chr8_int_ld
-# chr <- "8"
-# peak_snp <- chr8_int_peak
-# pval <- "allele_afr_dose_p"
-# win_ld <- win_chr5_a_ld
-# chr <- "5"
-# peak_snp <- chr5_a_peak
+# win_ld <- win_chr10_a_ld
+# chr <- "10"
+# peak_snp <- win_chr10_a_sig_peaks$position[1]
 # pval <- "allele_dose_p"
 plot_locuszoom <- function(win_ld, chr, peak_snp, pval) {
   # Remove NA pvalues
@@ -457,8 +494,6 @@ win_chr8_sig_merge_dedup %>%
 
 ### **Allele Locus Zoom Plot**
 
-*TODO: will revisit adding these later - want to only calculated LD once*
-
 For locus zoom plot, want one version for each of the "peaks". To do this,
 narrow down the above to keep only top SNP from each set of physically close
 SNPs.
@@ -487,21 +522,21 @@ head(win_chr8_a_sig_peaks)
 Only plot the one most significant peak SNP:
 
 ```{r}
-# chr8_a_ld <- Reduce(full_join, lapply(win_chr8_a_sig_peaks$position, function(pos) {
-#   return(calc_peak_ld(pos, win_chr8_a_sig, df_chr8, "allele_dose_p"))
-# }))
-# 
-# win_chr8_a_ld <- as.data.frame(inner_join(
-#   win_chr8 %>% dplyr::mutate(chr = 8),
-#   chr8_a_ld,
-#   by = c("position" = "pos")))  # should keep all entries
-# 
-# 
-# chr8_a_peak <- win_chr8_a_sig_peaks$position[which.min(win_chr8_a_sig_peaks$allele_dose_p)]
-# 
-# # Plot locus zoom
-# plot_chr8_a_lz <- plot_locuszoom(win_chr8_a_ld, "8", chr8_a_peak, "allele_dose_p")
-# plot_chr8_a_lz
+chr8_a_ld <- Reduce(full_join, lapply(win_chr8_a_sig_peaks$position, function(pos) {
+  return(calc_peak_ld(pos, df_chr8, "allele_dose_p"))
+}))
+
+win_chr8_a_ld <- as.data.frame(inner_join(
+  win_chr8 %>% dplyr::mutate(chr = 8),
+  chr8_a_ld,
+  by = c("position" = "pos")))  # should keep all entries
+
+
+chr8_a_peak <- win_chr8_a_sig_peaks$position[which.min(win_chr8_a_sig_peaks$allele_dose_p)]
+
+# Plot locus zoom
+plot_chr8_a_lz <- plot_locuszoom(win_chr8_a_ld, "8", chr8_a_peak, "allele_dose_p")
+plot_chr8_a_lz
 
 ```
 
@@ -536,20 +571,20 @@ head(win_chr8_int_sig_peaks)
 Only plot the one most significant peak SNP:
 
 ```{r}
-# chr8_int_ld <- Reduce(full_join, lapply(win_chr8_int_sig_peaks$position, function(pos) {
-#   return(calc_peak_ld(pos, win_chr8_int_sig, df_chr8, "allele_afr_dose_p"))
-# }))
-# 
-# win_chr8_int_ld <- as.data.frame(inner_join(
-#   win_chr8 %>% dplyr::mutate(chr = 8),
-#   chr8_int_ld,
-#   by = c("position" = "pos")))  # should keep all entries
-# 
-# chr8_int_peak <- win_chr8_int_sig_peaks$position[which.min(win_chr8_int_sig_peaks$allele_afr_dose_p)]
-# 
-# # Plot locus zoom
-# plot_chr8_int_lz <- plot_locuszoom(win_chr8_int_ld, "8", chr8_int_peak, "allele_afr_dose_p")
-# plot_chr8_int_lz
+chr8_int_ld <- Reduce(full_join, lapply(win_chr8_int_sig_peaks$position, function(pos) {
+  return(calc_peak_ld(pos, df_chr8, "allele_afr_dose_p"))
+}))
+
+win_chr8_int_ld <- as.data.frame(inner_join(
+  win_chr8 %>% dplyr::mutate(chr = 8),
+  chr8_int_ld,
+  by = c("position" = "pos")))  # should keep all entries
+
+chr8_int_peak <- win_chr8_int_sig_peaks$position[which.min(win_chr8_int_sig_peaks$allele_afr_dose_p)]
+
+# Plot locus zoom
+plot_chr8_int_lz <- plot_locuszoom(win_chr8_int_ld, "8", chr8_int_peak, "allele_afr_dose_p")
+plot_chr8_int_lz
 
 ```
 
@@ -728,14 +763,90 @@ win_chr10_int_sig %>%
 ```
 
 
+### **Allele Locus Zoom Plot**
+
+For locus zoom plot, want one version for each of the "peaks". To do this,
+narrow down the above to keep only top SNP from each set of physically close
+SNPs.
+
+```{r}
+# Get ranges of points within 30,000bp of each other
+win_chr10_a_sig_ranges <-
+  IRanges(start = win_chr10_a_sig$position, end = win_chr10_a_sig$position)
+win_chr10_a_sig_merged_ranges <-
+  IRanges::reduce(win_chr10_a_sig_ranges, min.gapwidth = 30000)
+
+# Add range group to original df
+win_chr10_a_sig$group <-
+  subjectHits(findOverlaps(win_chr10_a_sig_ranges, win_chr10_a_sig_merged_ranges))
+
+# Group by the merged ranges and keep the row with the lowest p-value in each group
+win_chr10_a_sig_peaks <- win_chr10_a_sig %>%
+  dplyr::group_by(group) %>%
+  dplyr::slice(which.min(allele_dose_p)) %>%
+  ungroup() %>%
+  arrange(allele_dose_p)
+
+head(win_chr10_a_sig_peaks)
+```
+
+Only plot the one most significant peak SNP:
+
+```{r}
+chr10_a_ld <- Reduce(full_join, lapply(win_chr10_a_sig_peaks$position, function(pos) {
+  return(calc_peak_ld(pos, df_chr10, "allele_dose_p"))
+}))
+
+
+win_chr10_a_ld <- as.data.frame(inner_join(
+  win_chr10 %>% dplyr::mutate(chr = 10),
+  chr10_a_ld,
+  by = c("position" = "pos")))  # should keep all entries
+
+
+chr10_a_peak <- win_chr10_a_sig_peaks$position[which.min(win_chr10_a_sig_peaks$allele_dose_p)]
+
+# Plot locus zoom
+plot_chr10_a_lz <- plot_locuszoom(win_chr10_a_ld, "10", chr10_a_peak, "allele_dose_p")
+plot_chr10_a_lz
+
+```
+
+
+### **Interaction Locus Zoom Plot**
+
+For locus zoom plot, want one version for each of the "peaks". To do this,
+narrow down the above to keep only top SNP from each set of physically close
+SNPs.
+
+```{r}
+# Get ranges of points within 30,000bp of each other
+win_chr10_int_sig_ranges <-
+  IRanges(start = win_chr10_int_sig$position, end = win_chr10_int_sig$position)
+win_chr10_int_sig_merged_ranges <-
+  IRanges::reduce(win_chr10_int_sig_ranges, min.gapwidth = 30000)
+
+# Add range group to original df
+win_chr10_int_sig$group <-
+  subjectHits(findOverlaps(win_chr10_int_sig_ranges, win_chr10_int_sig_merged_ranges))
+
+# Group by the merged ranges and keep the row with the lowest p-value in each group
+win_chr10_int_sig_peaks <- win_chr10_int_sig %>%
+  dplyr::group_by(group) %>%
+  dplyr::slice(which.min(allele_afr_dose_p)) %>%
+  ungroup() %>%
+  arrange(allele_afr_dose_p)
+
+head(win_chr10_int_sig_peaks)
+```
+
+
 ### **Allele Plot with Phenotype**
 
 One for each SNP crossing significance threshold, arranged from most to least
-significant.
+significant. Only showing the top 6.
 
-```{r out.width = '50%', fig.show = 'hold'}
-colors <- c(color_lratio, color_bratio, color_maxratio)
-
+```{r out.width = '100%', fig.show = 'hold'}
 # Inputs to plot_split should be
   # pheno_mfvc = pheno dataframe prepared above
   # "TopMed_ID" = name of ID column in pheno file
@@ -755,9 +866,9 @@ walk(win_chr10_a_sig$position, ~ {
   print(plot_split(pheno_mff, "TopMed_ID", df_chr10, win_chr10_a_sig, .x, "maxFEV1_FVC", colors))
 })
 
+
+
 ```
-
-
 
 # **Write Out**
 
