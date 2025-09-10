@@ -1,3 +1,5 @@
+**TODO: re-organization in-progress along with pgx_laba repo.**
+
 # **Setup**
 
 *Note that these steps should only need to be run once.*
@@ -34,23 +36,20 @@ mv -r rfmix_input/ /path/to/repo
 This sub-folder contains all the scripts needed to calculate two-way (AFR and
 EUR) local ancestry estimates using RFMix.
 
-Bash batch scripts are used to run each step described below. These are located
-under batch_files/job_<name_of_script>.batch and they each run one bash script
-in the format <name_of_script>.sh one directory up. They are in SLURM batch
-submission format, but can be run as simple bash scripts.
-
-Many additional details are included in the bash and batch scripts.
+Bash batch scripts can be used to run each step described below. Because they
+are project-specific, they are not included here. Please see examples in the
+rkjcollab repo pgx_laba.
 
 ### **To Process Phased Data (WGS or Imputed)**
 
 This is likely the desired input data type for ultimately running LAAA fine
 mapping.
 
-1. job_prep_input_phased.batch, runs prep_input_phased.sh
+1. prep_input_phased.sh
 
-2. job_run_hg38_phased_conversion.batch, runs run_hg38_phased_conversion.sh
+2. run_hg38_phased_conversion.sh
 
-3. job_run_rfmix.sh, runs run_rfmix.sh
+3. run_rfmix.sh
 
 RFMix collapse option should be set to -o for uncollapsed output (used for LAAA
 input) and set to -co for collapsed output (used for Admixture Mapping inout).
@@ -60,11 +59,11 @@ input) and set to -co for collapsed output (used for Admixture Mapping inout).
 This is likely the desired input data type for ultimately running admixture
 mapping.
 
-1. job_prep_input_unphased.batch, runs prep_input_unphased.sh
+1. prep_input_unphased.sh
 
-2. job_run_shapeit.batch, runs run_shapeit.sh
+2. run_shapeit.sh
 
-3. job_run_rfmix.batch, runs run_rfmix.sh
+3. run_rfmix.sh
 
 RFMix collapse option should be set to -o for uncollapsed output (used for LAAA
 fine mapping input) and set to -co for collapsed output (used for admixture
@@ -84,15 +83,9 @@ which should be phased data (WGS or imputed) for fine mapping. Additionally,
 admixture mapping peak regions need to be identified, either by running the
 admixture_mapping subfolder or by using regions identified in another dataset.
 
-Bash batch scripts are used to run each step described below. These are located
-under batch_files/job_<name_of_script>.batch and they each run one bash script
-in the format <name_of_script>.sh one directory up.
-
-Many additional details are included in the bash and batch scripts.
-
 ### **To Process Phased Data (WGS or Imputed)**
 
-1. job_1.1_calc_rfmix_gwide_ancestry.batch, runs 1.1_calc_rfmix_gwide_ancestry.sh
+1. 1.1_calc_rfmix_gwide_ancestry.sh
 
 The first step calculates a global ancestry proportion based on the RFMix
 estimates which is used as a covariate in LAAA. For this first step to be run,
@@ -100,16 +93,14 @@ you will have to already have results for all chromosomes from RFMix.
 
 *TODO: add discussion here for alternative if already have global ancestry.*
 
-*2. 2.1_make_laaa_pheno.R*
+2. Make project-specific phenotype file
 
-*TO NOTE: this script is just an example.* The second step is to make the
-phenotype file to be used for analysis. The script provided in the repo is an
-example script used to create a file in the correct format. The file should be
-tab-delimited, have a .txt extension, and include column names.
+The file should be tab-delimited, have a .txt extension, and include column names.
 
-3. job_2.2_2.3_run_laaa.sh, runs 2.2_create_dose_frames.sh and 2.3_run_models.sh
+3. 2.2_create_dose_frames.sh
+4. 2.3_run_models.sh
 
-The final step will use the peak region files from admixture mapping (file name
+The final steps will use the peak region files from admixture mapping (file name
 format “{PHENO}_admixture_peak_contig_region_chr{#}.txt”) as inputs. One allele,
 ancestry, and allele-ancestry dose frames are made, the LAAA model is run.
 
