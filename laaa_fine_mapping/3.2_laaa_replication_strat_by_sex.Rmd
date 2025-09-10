@@ -1,0 +1,563 @@
+---
+title: "3.2_laaa_replication"
+author: "SDS"
+date: "Last compiled on `r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: kable
+    code_folding: hide
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding,
+  output_dir = paste0(Sys.getenv("RKJCOLLAB"), "/Collabs/ortega/reports")) })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(
+  root.dir = paste0(Sys.getenv("RKJCOLLAB"), "/Collabs/ortega"))
+
+# Common packages
+library(tidyverse)
+library(knitr)
+library(biomaRt)
+library(DT)
+library(conflicted)
+library(scales)
+library(patchwork)
+library(table1)
+
+# Set display options
+options(digits = 4)  # only 2 digits after decimal
+
+```
+
+# **Overview**
+
+Analysis of replication of SARP/CSGA LAAA results in BARD.
+
+**TO NOTE: current report simplified to only look at chr8.**
+
+# **Combined Analysis**
+## **Load Data**
+
+```{r load_data, message = F}
+# TODO: Abhishek update the paths in this chunk to their locations on your computer
+# SARP/CSGA LAAA significant results
+data_sarp <- read_csv(
+  "data/laaa_wgs/output/sig_all_results_all_chr.csv")
+data_bard <- read_delim(
+  "data/bard_laaa_results/adult_only/output/region_hg38_post_fvc_chr8/post_fvc_assoc_chr8.txt")
+
+# Add max_abs_beta column to BARD data
+data_bard$max_abs_beta <- apply(
+    data_bard[, c("allele_dose_beta", "afr_dose_beta", "allele_afr_dose_beta")], 1, function(row) {
+      cols <- c("allele_dose_beta", "afr_dose_beta", "allele_afr_dose_beta")
+      cols[which.max(abs(row))]
+    })
+
+# Function to read in dose frames
+read_dose_frames <- function(dir_name) {
+    df_list <- list.files(dir_name, full.names = T)
+    
+    df_all <- Reduce(rbind, lapply(df_list, function(file) {
+      file_base <- basename(file)
+      df_name <- gsub(
+        ".+[[:digit:]]+_", "",
+        gsub("\\.txt", "", file_base))
+      df <- read_delim(file) %>%
+        dplyr::mutate(type = df_name) %>%
+        relocate(type)
+      return(df)
+  }))
+  return(df_all)
+}
+
+# Add paths to each directory that contains dose frames
+df_chr8_sarp <-read_dose_frames(
+  "data/laaa_wgs/dose_frames/region_hg38_maxFVC_chr8")
+df_chr8_bard <- read_dose_frames(
+  "data/bard_laaa_results/adult_only/dose_frames/region_hg38_post_fvc_chr8")
+
+# Add paths to same phenotype files used while running LAAA
+pheno_mfvc_sarp <- read_delim(
+  "data/pheno/SARP123_CSGA_348_laaa_maxFVC_pheno.txt")
+pheno_mfvc_bard <- read_delim(
+  "data/bard_laaa_results/adult_only/pheno/BARD_age_gt_12_laaa_post_fvc_pheno.txt")
+
+# Update path to script that sets main paper colors
+source("/Users/slacksa/repos/local_ancestry_analysis/laaa_fine_mapping/set_main_paper_colors.R")
+
+```
+
+## **Functions**
+
+```{r}
+# Function to pivot longer and then plot
+# data_df <- df_chr8_sarp
+# data_af <- data_sarp
+# positions <- data_sarp %>%
+#   dplyr::filter(chr == "8") %>%
+#   dplyr::pull(position)
+# positions <- positions[1:10]
+
+plot_dose_frames <- function(data_df, data_af, positions) {
+  # Get list for factoring positions
+  positions_fact <- as.character(sort(positions))
+  
+  # Afr dose
+  data_df_mod <- data_df %>%
+    dplyr::filter(position %in% positions) %>%
+    pivot_longer(
+      cols = -c("position", "ref", "alt", "type"),
+      names_to = "ID",
+      values_to = "value") %>%
+  dplyr::mutate(
+    value = factor(value, levels = c(0, 1, 2)),
+    position = factor(position, levels = positions_fact),
+    type = factor(type, levels = c("afr_dose", "allele_dose", "allele_afr_dose")))
+  data_af_mod <- data_af %>%
+    dplyr::filter(position %in% positions) %>%
+    dplyr::mutate(
+      position = factor(position, levels = positions_fact),
+      int_na = as.factor(ifelse(is.na(allele_afr_dose_p), "yes", "no")))
+  
+  p1 <- ggplot(data_df_mod, aes(x = position, fill = value, group = interaction(type, value))) +
+    geom_bar(position = "fill", width = 0.8) +
+    theme_minimal() +
+    facet_wrap(~type, ncol = 1) +
+    theme(axis.text.x = element_blank(),
+          axis.title.x = element_blank())
+  p2 <- ggplot(data_af_mod, aes(x = position, y = alt_frq)) +
+    geom_col() +
+    theme_minimal() +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+  p3 <- ggplot(data_af_mod, aes(x = position, y = int_na, fill = int_na)) +
+    geom_tile() +
+    scale_fill_manual(values = c("no" = "grey", "yes" = "red")) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+          axis.ticks.x = element_blank())
+  # Combined plot
+  p1 / p2 / p3 + plot_layout(heights = c(4, 1, 1))
+  
+}
+
+plot_dose_frames_spag <- function(data, positions) {
+  # Afr dose
+  data_mod <- data %>%
+    dplyr::filter(position %in% positions) %>%
+    pivot_longer(
+      cols = -c("position", "ref", "alt", "type"),
+      names_to = "ID",
+      values_to = "value") %>%
+  dplyr::mutate(
+    value = as.numeric(value),  # keep 0, 1, 2 as numeric,
+    position = as.factor(position),
+    type = factor(type, levels = c("afr_dose", "allele_dose", "allele_afr_dose")))
+  
+    ggplot(data_mod, aes(x = position, y = value, group = ID)) +
+      geom_line(alpha = 0.3) +              # line connecting each individual's values
+      geom_point(alpha = 0.6, size = 1.5) + # dots at each position
+      facet_wrap(~type, ncol = 1) +         # separate panel per dose type
+      scale_y_continuous(breaks = c(0, 1, 2)) +
+      labs(
+        x = "Position",
+        y = "Dose Value",
+        title = "Per-Person Dose Trajectories Across Positions",
+        subtitle = "Lines connect individual values per type"
+      ) +
+      theme_minimal() +
+      theme(
+        strip.text = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+}
+
+# Plot split phenotype
+# For testing
+# pheno_data <- pheno_mfvc_sarp
+# pheno_data_id_col <- "TopMed_ID"
+# dose_frame <- df_chr8_sarp
+# sig_data <- data_sarp
+# position <- data_sarp$position[1]
+# pheno <- "maxFVC"
+# colors = c(color_lfvc, color_bfvc, color_maxfvc)
+# study <- "SARP"
+fun_split <- function(x, data, pheno) {
+  return(data.frame(
+    y = min(data[[pheno]]) - (0.1*(max(data[[pheno]]) - min(data[[pheno]]))),
+    label = length(x)))  # x comes from group = Asthma
+}
+plot_split <- function(
+    pheno_data, pheno_data_id_col, dose_frame, sig_data, position, pheno, colors, study) {
+ 
+  # Merge pheno and dose frame
+  df_afr <- dose_frame %>% dplyr::filter(type == "afr_dose") %>%
+    dplyr::select(-type, -ref, -alt) %>%
+    column_to_rownames(var = "position")
+  df_afr_t <- as.data.frame(t(df_afr))
+  colnames(df_afr_t) <- paste0(colnames(df_afr_t), "_afr")
+  df_afr_t <- rownames_to_column(df_afr_t, var = "ID")
+  
+  df_allele <- dose_frame %>% dplyr::filter(type == "allele_dose") %>%
+    dplyr::select(-type, -ref, -alt) %>%
+    column_to_rownames(var = "position")
+  df_allele_t <- as.data.frame(t(df_allele))
+  colnames(df_allele_t) <- paste0(colnames(df_allele_t), "_allele")
+  df_allele_t <- rownames_to_column(df_allele_t, var = "ID")
+  
+  # Convert ID columns to chr before joining
+  pheno_data[[pheno_data_id_col]] = as.character(pheno_data[[pheno_data_id_col]])
+  df_afr_t$ID <- as.character(df_afr_t$ID)
+  df_allele_t$ID <- as.character(df_allele_t$ID)
+  
+  pheno_df_temp <- inner_join(
+    pheno_data,
+    df_afr_t,
+    by = setNames("ID", pheno_data_id_col))  # setNames flips order
+  pheno_df <- inner_join(
+    pheno_df_temp,
+    df_allele_t,
+    by = setNames("ID", pheno_data_id_col))  # setNames flips order
+  
+  # Get additional details for plot from sig_data
+  driving_term <- sig_data$max_abs_beta[sig_data$position == position]
+  
+  # Make format of allele dose that have alt & ref alleles
+  alt <- sig_data$alt[sig_data$position == position]
+  ref <- sig_data$ref[sig_data$position == position]
+  allele_labels <- c(
+    `0` = paste0(ref, ref),
+    `1` = paste0(ref, alt),
+    `2` = paste0(alt, alt))
+  
+  plot <- ggplot(pheno_df, aes(
+    x = factor(!!rlang::sym(paste0(position, "_allele"))),
+    y = !!rlang::sym(pheno))) +
+  geom_boxplot(aes(fill = "Combined"),
+               varwidth = TRUE, alpha = 0.7, outlier.shape = 21) +
+  geom_boxplot(aes(fill = factor(!!rlang::sym(paste0(position, "_afr")))),
+               varwidth = TRUE, alpha = 0.7, outlier.shape = 21) +
+  labs(x = "Genotype",
+       y = paste0(
+         gsub("_", "/", gsub("m", "M", pheno)),
+         ifelse(str_detect(pheno, "_"), " Ratio", " (mL)")),
+       fill = "Copies Local African Ancestry",
+       title = paste0(
+         study, " - chr", sig_data$chr, ":", position, ":", ref, ":", alt, ", Driving Term: ", driving_term)) +
+  scale_x_discrete(labels = allele_labels) +
+  scale_y_continuous(labels = label_comma()) +
+  scale_fill_manual(values = c("Combined" = "transparent",  # Transparent box plot
+                             "0" = colors[1], "1" = colors[2], "2" = colors[3]),
+                    labels = c("Combined" = "Combined", "0" = "0",
+                               "1" = "1", "2" = "2")) +
+  theme_bw() +
+  theme(legend.position = "bottom") +
+  stat_summary(fun.data = fun_split, fun.args = list(data = pheno_df, pheno = pheno),
+               geom = "text", aes(group = !!rlang::sym(paste0(position, "_afr"))),
+               position = position_dodge(0.5), hjust = 0.5)
+  return(plot)
+}
+
+```
+
+## **Compare**
+
+For comparison - first getting significant LAAA results in SARP/CSGA, then
+subsetting to only those SNPs that are also found in BARD results.
+
+SARP/CSGA covariates: group, age, sex, ht, bmi, RFMIX_GW_AFR
+
+BARD covariates: age_screening, gender, bmi_screening, height_cm, RFMIX_GW_AFR
+
+*TODO: we may want to consider removing covariates not significantly associated*
+*with max/post FVC.*
+
+## **Table 1s**
+
+These are only the individuals included in the maxFVC phenotype files for LAAA.
+
+```{r}
+pheno_mfvc_merge <- full_join(
+  pheno_mfvc_sarp %>%
+    dplyr::mutate(
+      study = "SARP_CSGA"),
+  pheno_mfvc_bard %>% dplyr::mutate(
+    FID = as.character(FID),
+    IID = as.character(IID),
+    study = "BARD"),
+  by = c("FID", "IID", "RFMIX_GW_AFR", "study", "maxFVC" = "post_fvc",
+         "ht" = "height_cm", "sex" = "gender", "age" = "age_screening",
+         "bmi" = "bmi_screening"))
+
+
+table1(~ maxFVC + ht + age + as.factor(sex) + as.factor(group) + bmi +
+         RFMIX_GW_AFR + weight_kg | study,
+       data = pheno_mfvc_merge)
+```
+
+
+## **MaxFVC Chr8**
+
+
+### **Dose Frames**
+
+Trying to understand the many NA values for interaction (allele_afr_dose) in 
+BARD. In Lancet Child Adolesc Health paper, Michelle comments that this often
+occurs for lower frequency SNPs because they are more likely to be on a single
+ancestral background, which leads to no variability in allele_afr_dose.
+
+**SARP/CSGA**
+
+```{r}
+sig_pos_chr8 <- data_sarp %>%
+  dplyr::filter(chr == "8") %>%
+  dplyr::filter(position %in% data_bard$position) %>%
+  dplyr::pull(position)
+
+plot_dose_frames(df_chr8_sarp, data_sarp, sig_pos_chr8)
+```
+
+**BARD**
+
+```{r}
+plot_dose_frames(df_chr8_bard, data_bard, sig_pos_chr8)
+```
+
+
+Across the region, the African ancestry dose hardly changes at all in either
+study. The two studies are incredibly consistent! Is sample size driving the 
+increase in interaction NAs in BARD?
+
+Check if individuals change values in this region:
+
+*TODO: update this with better way to keep individuals separate?*
+
+**SARP/CSGA**
+
+```{r}
+plot_dose_frames_spag(df_chr8_sarp, sig_pos_chr8)
+```
+
+**BARD**
+
+```{r}
+plot_dose_frames_spag(df_chr8_bard, sig_pos_chr8)
+```
+
+
+Alternate allele frequencies look nearly identical - quick check that they are
+not:
+
+```{r}
+check_af <- inner_join(
+  data_bard %>% dplyr::select(position, alt_frq),
+  data_sarp %>% dplyr::select(position, alt_frq),
+  by = c("position"),
+  suffix = c("_b", "_s"))
+
+datatable(check_af)
+```
+
+
+### **Phenotype Plots**
+
+For list of SNPs with NAs, look at phenotype plots side by side in BARD &
+SARP/CSGA.
+
+**BARD is on the left, SARP/CSGA is on the right.**
+
+
+```{r out.width = '50%', fig.show = 'hold'}
+sig_pos_chr8_bard_na <- data_bard %>%
+  dplyr::filter(position %in% sig_pos_chr8) %>%
+  dplyr::filter(is.na(allele_afr_dose_p)) %>%
+  dplyr::pull(position)
+
+colors = c(color_lfvc, color_bfvc, color_maxfvc)
+
+data_bard$chr <- 8
+# plot_split(pheno_mfvc_bard, "IID", df_chr8_bard, data_bard, "53887100", "post_fvc", colors)
+# plot_split(pheno_mfvc_sarp, "TopMed_ID", df_chr8_sarp, data_sarp, "53887100", "maxFVC", colors)
+
+walk(sig_pos_chr8_bard_na, ~ {
+  print(plot_split(pheno_mfvc_bard, "IID", df_chr8_bard, data_bard, .x, "post_fvc", colors, "BARD"))
+  print(plot_split(pheno_mfvc_sarp, "TopMed_ID", df_chr8_sarp, data_sarp, .x, "maxFVC", colors, "SARP/CSGA"))
+})
+```
+
+
+
+## **For Manuscript**
+
+For first version of manuscript, including boxplots for the top replicated SNP,
+instead of the top SNP in SARP/CSGA
+
+```{r}
+data_merge <- inner_join(
+  data_bard,
+  data_sarp,
+  by = c("chr", "position"),
+  suffix = c("_b", "_s")) %>%
+  dplyr::select(
+    position, ref_b, alt_b, alt_frq_b, ref_s, alt_s, alt_frq_s,
+    allele_dose_p_b, allele_dose_p_s)
+
+head(data_merge[order(data_merge$allele_dose_p_s), ])
+```
+
+```{r}
+head(data_merge[order(data_merge$allele_dose_p_b), ])
+```
+
+First BARD SNP with p < 0.05 is at position 53917720. Make boxplots in SARP/CSGA
+and in BARD for this SNP.
+
+```{r}
+plot_split(
+  pheno_mfvc_bard, "IID", df_chr8_bard, data_bard, "53917720",
+  "post_fvc", colors, "BARD")
+plot_split(
+  pheno_mfvc_sarp, "TopMed_ID", df_chr8_sarp, data_sarp, "53917720",
+  "maxFVC", colors, "SARP/CSGA")
+```
+
+
+
+# **Stratified by Sex Analysis**
+
+Plan is to look at the sex-stratified admixture mapping significant regions in
+both sexes in SARP & BARD, regardless of which sex the admixture mapping peak
+was identified in. Will do this with SARP as primary analysis, so for
+significant LAAA results in SARP (p-allele or p-afr-allele < 0.001), will merge
+in BARD results, then see if any BARD results also significant (< 0.05). Will
+export 1. full SARP results with BARD merged in & 2. only rows significant in
+both.
+
+## **Load Data**
+
+```{r load_data, message = F}
+
+
+data_s <- read_delim(
+  "data/laaa_wgs/strat_by_sex/output_male/region_hg38_maxFVC_chr8/maxFVC_assoc_chr8.txt")
+data_b <- read_delim(
+  "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_post_fvc_chr8/post_fvc_assoc_chr8.txt")
+
+
+```
+
+## **Tables LAAA Result Overlap**
+
+Looking at SNPs with p allele dose or p allele_afr dose < 10^-3 in SARP/CSGA,
+and pulling the results from those SNPs in BARD.
+
+### MaxFVC chr8 Males
+
+
+```{r}
+female_s_list <- c(
+  "chr5_maxFVC" = "data/laaa_wgs/strat_by_sex/output_female/region_hg38_maxFVC_chr5/maxFVC_assoc_chr5.txt",
+  "chr8_maxFVC" = "data/laaa_wgs/strat_by_sex/output_female/region_hg38_maxFVC_chr8/maxFVC_assoc_chr8.txt",
+  "chr1_maxFEVFVC" = "data/laaa_wgs/strat_by_sex/output_female/region_hg38_maxFEV1_FVC_chr1/maxFEV1_FVC_assoc_chr1.txt",
+  "chr6_maxFEVFVC" = "data/laaa_wgs/strat_by_sex/output_female/region_hg38_maxFEV1_FVC_chr6/maxFEV1_FVC_assoc_chr6.txt",
+  "chr10_maxFEVFVC" = "data/laaa_wgs/strat_by_sex/output_female/region_hg38_maxFEV1_FVC_chr10/maxFEV1_FVC_assoc_chr10.txt",
+  "chr16_maxFEVFVC" = "data/laaa_wgs/strat_by_sex/output_female/region_hg38_maxFEV1_FVC_chr16/maxFEV1_FVC_assoc_chr16.txt",
+  "chr1_maxFEV" = "data/laaa_wgs/strat_by_sex/output_female/region_hg38_maxFEV1_chr1/maxFEV1_assoc_chr1.txt",
+  "chr2_bFEVFVC" = "data/laaa_wgs/strat_by_sex/output_female/region_hg38_bFEV_FVC_chr2/bFEV_FVC_assoc_chr2.txt",
+  "chr3_bFEVFVC" = "data/laaa_wgs/strat_by_sex/output_female/region_hg38_bFEV_FVC_chr3/bFEV_FVC_assoc_chr3.txt")
+
+female_b_list <- c(
+  "chr5_maxFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_female/output/region_hg38_post_fvc_chr5/post_fvc_assoc_chr5.txt",
+  "chr8_maxFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_female/output/region_hg38_post_fvc_chr8/post_fvc_assoc_chr8.txt",
+  "chr1_maxFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_female/output/region_hg38_post_fev1fvc_ratio_chr1/post_fev1fvc_ratio_assoc_chr1.txt",
+  "chr6_maxFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_female/output/region_hg38_post_fev1fvc_ratio_chr6/post_fev1fvc_ratio_assoc_chr6.txt",
+  "chr10_maxFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_female/output/region_hg38_post_fev1fvc_ratio_chr10/post_fev1fvc_ratio_assoc_chr10.txt",
+  "chr16_maxFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_female/output/region_hg38_post_fev1fvc_ratio_chr16/post_fev1fvc_ratio_assoc_chr16.txt",
+  "chr1_maxFEV" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_female/output/region_hg38_post_fev1_chr1/post_fev1_assoc_chr1.txt",
+  "chr2_bFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_female/output/region_hg38_bfev1fvc_ratio_chr2/bfev1fvc_ratio_assoc_chr2.txt",
+  "chr3_bFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_female/output/region_hg38_bfev1fvc_ratio_chr3/bfev1fvc_ratio_assoc_chr3.txt")
+
+male_s_list <- c(
+  "chr5_maxFVC" = "data/laaa_wgs/strat_by_sex/output_male/region_hg38_maxFVC_chr5/maxFVC_assoc_chr5.txt",
+  "chr8_maxFVC" = "data/laaa_wgs/strat_by_sex/output_male/region_hg38_maxFVC_chr8/maxFVC_assoc_chr8.txt",
+  "chr1_maxFEVFVC" = "data/laaa_wgs/strat_by_sex/output_male/region_hg38_maxFEV1_FVC_chr1/maxFEV1_FVC_assoc_chr1.txt",
+  "chr6_maxFEVFVC" = "data/laaa_wgs/strat_by_sex/output_male/region_hg38_maxFEV1_FVC_chr6/maxFEV1_FVC_assoc_chr6.txt",
+  "chr10_maxFEVFVC" = "data/laaa_wgs/strat_by_sex/output_male/region_hg38_maxFEV1_FVC_chr10/maxFEV1_FVC_assoc_chr10.txt",
+  "chr16_maxFEVFVC" = "data/laaa_wgs/strat_by_sex/output_male/region_hg38_maxFEV1_FVC_chr16/maxFEV1_FVC_assoc_chr16.txt",
+  "chr1_maxFEV" = "data/laaa_wgs/strat_by_sex/output_male/region_hg38_maxFEV1_chr1/maxFEV1_assoc_chr1.txt",
+  "chr2_bFEVFVC" = "data/laaa_wgs/strat_by_sex/output_male/region_hg38_bFEV_FVC_chr2/bFEV_FVC_assoc_chr2.txt",
+  "chr3_bFEVFVC" = "data/laaa_wgs/strat_by_sex/output_male/region_hg38_bFEV_FVC_chr3/bFEV_FVC_assoc_chr3.txt")
+
+male_b_list <- c(
+  "chr5_maxFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_post_fvc_chr5/post_fvc_assoc_chr5.txt",
+  "chr8_maxFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_post_fvc_chr8/post_fvc_assoc_chr8.txt",
+  "chr1_maxFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_post_fev1fvc_ratio_chr1/post_fev1fvc_ratio_assoc_chr1.txt",
+  "chr6_maxFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_post_fev1fvc_ratio_chr6/post_fev1fvc_ratio_assoc_chr6.txt",
+  "chr10_maxFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_post_fev1fvc_ratio_chr10/post_fev1fvc_ratio_assoc_chr10.txt",
+  "chr16_maxFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_post_fev1fvc_ratio_chr16/post_fev1fvc_ratio_assoc_chr16.txt",
+  "chr1_maxFEV" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_post_fev1_chr1/post_fev1_assoc_chr1.txt",
+  "chr2_bFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_bfev1fvc_ratio_chr2/bfev1fvc_ratio_assoc_chr2.txt",
+  "chr3_bFEVFVC" = "data/bard_laaa_results/adult_only/strat_by_sex/laaa_wgs_male/output/region_hg38_bfev1fvc_ratio_chr3/bfev1fvc_ratio_assoc_chr3.txt")
+
+for (region in names(female_s_list)) {  # can use any list, all same names
+  print(region)
+  for (sex in c("female", "male")) {
+    print(sex)
+    s_list <- get(paste0(sex, "_s_list"))
+    b_list <- get(paste0(sex, "_b_list"))
+
+    data_s <- read_delim(s_list[region], show_col_types = F)
+    data_b <- read_delim(b_list[region], show_col_types = F)
+    
+    data_s_sig <- data_s %>%
+      dplyr::filter(allele_dose_p < 10^-3 | allele_afr_dose_p < 10^-3)
+  
+    merge <- left_join(
+      data_s_sig,
+      data_b,
+      by = c("position", "ref", "alt"),
+      suffix = c("_s", "_b"))
+    
+    merge_exp <- merge %>%
+      dplyr::select(
+        position, ref, alt, alt_frq_s, alt_frq_b,
+        all_of(starts_with("allele")), all_of(starts_with("afr"))) %>%
+      dplyr::select(
+        position, ref, alt, alt_frq_s, alt_frq_b,
+        allele_dose_beta_s, allele_dose_p_s, allele_dose_beta_b, allele_dose_p_b,
+        allele_afr_dose_beta_s, allele_afr_dose_p_s, allele_afr_dose_beta_b, allele_afr_dose_p_b,
+        afr_dose_beta_s, afr_dose_p_s, afr_dose_beta_b, afr_dose_p_b) %>%
+      dplyr::mutate(
+        sig_allele_dose_p_s = ifelse(allele_dose_p_s < 10^-3, 1, 0),
+        sig_allele_afr_dose_p_s = ifelse(allele_afr_dose_p_s < 10^-3, 1, 0))
+    print("SARP-CSGA N sig:")
+    print(nrow(merge_exp))
+    
+    merge_exp_sig <- merge_exp %>%
+      dplyr::filter(
+        (sig_allele_dose_p_s ==1 & allele_dose_p_b < 0.05) |
+          (sig_allele_afr_dose_p_s == 1 & allele_afr_dose_p_b < 0.05))
+    print("SARP-CSGA & BARD N sig:")
+    print(nrow(merge_exp_sig))
+    
+    # write_tsv(
+    #   merge_exp,
+    #   paste0("data/bard_laaa_results/adult_only/strat_by_sex/comp_to_sarp_csga/",
+    #          region, "_", sex, "_all_sarp_csga_sig.txt"))
+    # write_tsv(
+    #   merge_exp_sig,
+    #   paste0("data/bard_laaa_results/adult_only/strat_by_sex/comp_to_sarp_csga/",
+    #          region, "_", sex, "_sarp_csga_and_bard_sig.txt"))
+  }
+}
+```
+
+
+# **Session Info**
+
+```{r session_info}
+sessionInfo()
+```
