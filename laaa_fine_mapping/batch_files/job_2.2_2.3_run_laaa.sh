@@ -23,8 +23,8 @@ rfmix_results_dir="${data_dir}/rfmix_wgs/output_o"
 admix_dir="${data_dir}/pheno_analysis/output/strat_by_sex"
 
 # Set inputs for running LAAA model
-strat_by_sex="male"
-pheno_file="pheno/SARP123_CSGA_*_laaa_\${pheno}_pheno${strat_by_sex:+_$strat_by_sex}.txt"
+strat_by_sex="female"
+pheno_file="pheno/strat_by_sex/SARP123_CSGA_*_laaa_\${pheno}_pheno${strat_by_sex:+_$strat_by_sex}.txt"
     # single quotes are required here for substitution of and $pheno below
     # pheno string in name must match column name with phenotype values
 pheno_id_col_name="TopMed_ID"  # should match format in RFMix output
@@ -35,10 +35,10 @@ cov_list="group,age,ht,bmi,RFMIX_GW_AFR"
 cont_dir=$(dirname "${code_dir}")
 # apptainer exec --bind ${data_dir}:${data_dir} --bind ${code_dir}:${code_dir} \
 #     ${cont_dir}/local_ancestry_analysis.sif \
-#     bash ${code_dir}/2.2_create_dose_frames.sh \
-#     "${out_dir_prefix}/dose_frames" \
-#     "$rfmix_results_dir" \
-#     "$admix_dir"
+bash ${code_dir}/2.2_create_dose_frames.sh \
+    "${out_dir_prefix}/dose_frames" \
+    "$rfmix_results_dir" \
+    "$admix_dir"
 
 # Run step 2.3 script to run LAAA model
 out_dir="${out_dir_prefix}/output${strat_by_sex:+_$strat_by_sex}"
