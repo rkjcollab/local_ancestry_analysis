@@ -31,7 +31,7 @@ mv -r rfmix_input/ /path/to/repo
 
 # **Steps**
 
-## **local_anc_afr_eur**
+## **local_anc_afr_eur - RFMix**
 
 This sub-folder contains all the scripts needed to calculate two-way (AFR and
 EUR) local ancestry estimates using RFMix.
@@ -69,6 +69,21 @@ RFMix collapse option should be set to -o for uncollapsed output (used for LAAA
 fine mapping input) and set to -co for collapsed output (used for admixture
 mapping inout).
 
+## **gwide_anc**
+
+*TODO: add description*
+
+For admixture mapping, this full section needs to be run. If only want to run
+LAAA, then can just run script XXX.
+
+1. job_1.1_calc_rfmix_gwide_ancestry.batch, runs 1.1_calc_rfmix_gwide_ancestry.sh
+
+The first step calculates a global ancestry proportion based on the RFMix
+estimates which is used as a covariate in LAAA. For this first step to be run,
+you will have to already have results for all chromosomes from RFMix.
+
+*TODO: add discussion here for alternative if already have global ancestry.*
+
 ## **admixture_mapping**
 
 *TODO: to be added*
@@ -84,14 +99,6 @@ admixture mapping peak regions need to be identified, either by running the
 admixture_mapping subfolder or by using regions identified in another dataset.
 
 ### **To Process Phased Data (WGS or Imputed)**
-
-1. 1.1_calc_rfmix_gwide_ancestry.sh
-
-The first step calculates a global ancestry proportion based on the RFMix
-estimates which is used as a covariate in LAAA. For this first step to be run,
-you will have to already have results for all chromosomes from RFMix.
-
-*TODO: add discussion here for alternative if already have global ancestry.*
 
 2. Make project-specific phenotype file
 
