@@ -69,6 +69,12 @@ RFMix collapse option should be set to -o for uncollapsed output (used for LAAA
 fine mapping input) and set to -co for collapsed output (used for admixture
 mapping inout).
 
+TO NOTE: If the process for unphased data is run on denser, imputed or WGS data
+with SHAPEIT for phasing and the references included in this repo, the local
+ancestry calls will likely be incorrect (for example, showing 100% of one ancestry
+for all individuals). We are unsure why this happens, but know that if possible,
+the pipeline should be run on WGS or imputed data as originally phased.
+
 ## **gwide_anc**
 
 *TODO: add description*
