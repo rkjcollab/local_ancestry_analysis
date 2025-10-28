@@ -74,16 +74,26 @@ mapping inout).
 
 *TODO: add description*
 
-For admixture mapping, this full section needs to be run. If only want to run
-LAAA, then can just run script XXX.
+For admixture mapping or QC of RFMix estimates, this full section needs to
+be run. If only want to run LAAA, then can just run first script.
 
-1. job_1.1_calc_rfmix_gwide_ancestry.batch, runs 1.1_calc_rfmix_gwide_ancestry.sh
+1. 1.1_calc_gwide_ancestry.sh
 
 The first step calculates a global ancestry proportion based on the RFMix
 estimates which is used as a covariate in LAAA. For this first step to be run,
 you will have to already have results for all chromosomes from RFMix.
 
 *TODO: add discussion here for alternative if already have global ancestry.*
+
+2: 1.2_calc_local_afr_ancestry.sh
+
+TO NOTE: Only run this step if you are planning to run admixture mapping.
+
+optional step 3: local_ancestry_qc.Rmd
+
+This report can be run using the output from steps 1 and 2 to verify that RFMix
+calls seems accurate.
+
 
 ## **admixture_mapping**
 
