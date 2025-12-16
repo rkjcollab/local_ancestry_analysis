@@ -7,7 +7,9 @@ admix.input.dir <- args[3]
 bim <- read.table(bim.file.name, stringsAsFactors = F)
 
 snps <- c()
-for (chr in 1:22) {
+for (chr in 22:22) {
+# TEMP
+# for (chr in 1:22) {
   positions <- read.table(paste0(
     rfmix.results.dir, "/chr", chr, "/chr", chr, "_local_ancestry_snps.txt"),
     head=F)[,1]

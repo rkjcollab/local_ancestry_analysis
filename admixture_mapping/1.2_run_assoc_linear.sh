@@ -9,16 +9,19 @@ covar=$2
 pheno_dir=$3
 out_dir=$4
 
-#TODO: need to remove hardcoded pheno name!
-
 # Get list of phenotype files want to run analysis for
-pheno_file_list=$(ls $pheno_dir | grep -E "pheno(_male|_female)?\.txt")
+pheno_file_list=$(ls "$pheno_dir" \
+  | grep "admix_map" \
+  | grep -E "pheno(_male|_female)?\.txt")
 for pheno_file in $pheno_file_list; do
-    [[ $pheno_file =~ SARP123_CSGA_[0-9]+_admix_map_(.*)_pheno(_male|_female)?\.txt ]];
-    pheno=${BASH_REMATCH[1]}
-    sex=${BASH_REMATCH[2]}  # may be empty
 
-    out_file="${out_dir}/SARP123_CSGA_${pheno}_admix_map${sex}"
+    [[ $pheno_file =~ ^(.*)_admix_map_(.*)_pheno(_male|_female)?\.txt$ ]]
+
+    study_prefix=${BASH_REMATCH[1]}
+    pheno=${BASH_REMATCH[2]}
+    sex=${BASH_REMATCH[3]}  # may be empty
+
+    out_file="${out_dir}/${study_prefix}_${pheno}_admix_map${sex}"
 
     plink --bfile "$plink_input" \
         --pheno "${pheno_dir}/${pheno_file}" \

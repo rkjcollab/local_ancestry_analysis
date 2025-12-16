@@ -13,8 +13,11 @@ rfmix_results_dir=$2
 rfmix_input_dir=$3
 admix_input_dir=$4
 
+# Get current code dir
+code_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Get an LD pruned list of SNPs to use from admixed populations
-Rscript calc_gwide_ancestry/get_initial_admix_snps.R \
+Rscript ${code_dir}/get_initial_admix_snps.R \
     ${plink_file_name}.bim ${rfmix_results_dir} ${admix_input_dir}
 
 plink --bfile $plink_file_name \
@@ -50,7 +53,7 @@ do
     grep "^$chr\t" ${admix_input_dir}/ld_filtered_admixed.bim | \
         cut -f4 > ${admix_input_dir}/chr${chr}.keep
 
-    python calc_gwide_ancestry/create_ref_tped_files.py \
+    python ${code_dir}/create_ref_tped_files.py \
         $chr $admix_input_dir ${rfmix_input_dir}/working
 
     cat ${rfmix_input_dir}/working/chr${chr}.tped >> ${rfmix_input_dir}/working/ref.tped

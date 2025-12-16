@@ -16,9 +16,12 @@ admix_dir=$1
 rfmix_results_dir=$2
 out_dir=$3
 
+# Get current code dir
+code_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Calculate local AFR ancestry
 plink_file_name="${admix_dir}/input/initial_admixed"
 nr_samples=`wc -l ${plink_file_name}.fam | xargs | cut -f1 -d' '`
 
-Rscript code/calc_local_afr_ancestry/calc_local_afr_ancestry.R \
+Rscript ${code_dir}/calc_local_afr_ancestry/calc_local_afr_ancestry.R \
     $nr_samples $rfmix_results_dir $out_dir

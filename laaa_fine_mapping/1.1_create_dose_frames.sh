@@ -8,6 +8,9 @@ out_dir_prefix="$1"
 rfmix_results_dir="$2"
 admix_dir="$3"
 
+# Get current code dir
+code_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Loop over peak admixture mapping regions and make dose frames for each
 admix_file_list=$(ls $admix_dir | grep -E "region_chr[0-9]+(_male|_female)?\.txt")
 
@@ -27,7 +30,7 @@ for admix_file in $admix_file_list; do
     out_dir="${out_dir_prefix}/region_hg19_${pheno}_chr${chr}"
 
     if [ ! -d "$out_dir" ]; then
-        bash make_dose_frames/create_dose_frames.sh \
+        bash ${code_dir}/make_dose_frames/create_dose_frames.sh \
             $chr $start $end $pheno "${rfmix_results_dir}/chr${chr}" $out_dir
     fi
 done

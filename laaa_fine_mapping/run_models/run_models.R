@@ -9,12 +9,13 @@ output.dir <- args[4]
 pheno.file <- args[5]
 pheno_id_col_name <- args[6]
 cov_list <- args[7]  # should be passed as "cov1,cov2"
+code_dir <- args[8]
 
 # Reformat covariate list
 cov_list <- unlist(strsplit(cov_list, ","))
 
 # Source lung function models
-source("run_models/models_lung_function.R")
+source(paste0(code_dir, "/run_models/models_lung_function.R"))
 
 # Get the model frame & set indicated ID column to "id"
 phenos <- read.delim(pheno.file, stringsAsFactors = F)

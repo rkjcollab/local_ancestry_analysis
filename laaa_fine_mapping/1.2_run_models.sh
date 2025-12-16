@@ -9,6 +9,9 @@ pheno_file="$3"
 pheno_id_col_name="$4" # should match format in RFMix output
 cov_list="$5"  # should be passed as "cov1,cov2" column names in pheno file
 
+# Get current code dir
+code_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Loop over dose frames and run LAAA for each
 dose_dir_list=$(ls $dose_dir | grep "region_hg38")
 for dose in $dose_dir_list; do
@@ -20,15 +23,15 @@ for dose in $dose_dir_list; do
 
     # Pheno file to be filled in with above phenotype
     pheno_file_pheno=$(eval "echo $pheno_file")
+    echo $pheno_file_pheno
 
     # Run models for region
     mkdir "$out_dir_prefix"
     out_dir="${out_dir_prefix}/${dose}"
     mkdir $out_dir
 
-    echo $chr
-
-    Rscript run_models/run_models.R \
-        $pheno $chr ${dose_dir}/${dose} $out_dir $pheno_file_pheno $pheno_id_col_name $cov_list
+    Rscript ${code_dir}/run_models/run_models.R \
+        $pheno $chr ${dose_dir}/${dose} $out_dir $pheno_file_pheno \
+        $pheno_id_col_name $cov_list $code_dir
 
 done
