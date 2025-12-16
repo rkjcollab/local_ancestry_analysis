@@ -13,7 +13,7 @@ code_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 work_dir="${pheno_analysis_dir}/working"
 mkdir $work_dir
 
-# Calculate effective tests, using input made by script 2.1_create_plink_input_local
+# Calculate effective tests, using input made by script create_plink_input_local
 echo -e chr'\t'm_eff'\t'm > "${out_dir}/m_eff_${perc_variance_exp}.txt"
 for ((chr=1; chr<=22; chr++)); do
     grep "^$chr\t" "${input_dir}/local_ancestry.map" | cut -f2 > "${work_dir}/snps.txt"
